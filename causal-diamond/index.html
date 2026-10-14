@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Causal Diamond</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: an instrument console. Play field and timeline strip on the left, briefing and controls docked right; stacks on phones. Deliberately single dark theme (deep space). */
+:root{
+  --void:#090b17; --panel:#10132a; --floor:#12152d; --grid:#1d2247; --wall:#2b3166; --wallhi:#3b4386;
+  --ink:#e7e9f6; --muted:#8a90b8;
+  --self:#7fd6ff; --photon:#f2c14e; --paradox:#ff5c8a; --exit:#8ef0b0;
+  --link-p:#f2c14e; --link-q:#c39bff; --link-r:#ff9f6b;
+  --display:'Michroma','Eurostile','Bank Gothic',system-ui,sans-serif;
+  --body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--void);color:var(--ink)}
+body{font-family:var(--body);font-size:15px;line-height:1.5;padding-block:20px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1200px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(20px,3.2vw,30px);letter-spacing:.08em;margin:0;text-wrap:balance}
+.sub{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.04em;margin-top:4px}
+.levels{display:flex;flex-wrap:wrap;gap:8px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+@media (max-width:920px){.main{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;border:1px solid var(--grid);background:var(--panel);border-radius:6px;overflow:hidden;min-width:0}
+#field{display:block;width:100%;touch-action:none;cursor:crosshair}
+#tl{display:block;width:100%;height:68px;border-top:1px solid var(--grid)}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--void) 86%,transparent);padding:16px}
+.card{max-width:420px;text-align:center;display:grid;gap:12px}
+.card h2{font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:.06em;margin:0}
+.card p{margin:0;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+aside{display:grid;gap:14px;min-width:0}
+section{border:1px solid var(--grid);border-radius:6px;padding:14px;display:grid;gap:10px;background:var(--panel)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.lvname{font-family:var(--display);font-size:16px;letter-spacing:.05em}
+.hint{margin:0;color:var(--ink);opacity:.9;font-size:14px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums}
+dt{color:var(--muted)} dd{margin:0;text-align:right}
+.ok{color:var(--exit)} .bad{color:var(--paradox)}
+button{font-family:var(--mono);font-size:12.5px;background:transparent;color:var(--ink);border:1px solid var(--wall);border-radius:4px;padding:7px 11px;cursor:pointer;letter-spacing:.02em}
+button:hover{border-color:var(--photon)}
+button:focus-visible{outline:2px solid var(--photon);outline-offset:2px}
+button.on{border-color:var(--photon);color:var(--photon)}
+button.primary{background:var(--photon);color:var(--void);border-color:var(--photon);font-weight:500}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px;color:var(--muted);margin:0}
+kbd{font-family:var(--mono);font-size:11.5px;color:var(--ink);border:1px solid var(--wall);border-bottom-width:2px;border-radius:3px;padding:1px 5px;white-space:nowrap}
+.legend{display:grid;gap:6px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+.toast{position:absolute;left:12px;right:12px;top:12px;margin:0 auto;max-width:560px;font-family:var(--mono);font-size:12.5px;background:color-mix(in srgb,var(--void) 90%,transparent);border:1px solid var(--wall);border-radius:4px;padding:8px 12px;text-align:center;transition:opacity .3s;pointer-events:none}
+.toast.warn{border-color:var(--paradox);color:var(--paradox)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>CAUSAL DIAMOND</h1>
+      <div class="sub">a time-loop prototype &middot; walk 4 tiles/s &middot; light (c) 6 tiles/s</div>
+    </div>
+    <div class="levels" id="levels"></div>
+  </header>
+
+  <div class="main">
+    <div class="stage" id="stage">
+      <canvas id="field" aria-label="Play field"></canvas>
+      <canvas id="tl" aria-label="Timeline"></canvas>
+      <div class="toast" id="toast" style="opacity:0"></div>
+      <div class="overlay" id="win" hidden>
+        <div class="card">
+          <h2 id="winTitle">TIMELINE CONSISTENT</h2>
+          <p id="winText"></p>
+          <div class="row"><button id="replayBtn">Replay level</button><button class="primary" id="nextBtn">Next level</button></div>
+        </div>
+      </div>
+    </div>
+
+    <aside>
+      <section>
+        <div class="eyebrow" id="lvIdx">Level 1</div>
+        <div class="lvname" id="lvName"></div>
+        <p class="hint" id="lvHint"></p>
+      </section>
+      <section>
+        <div class="eyebrow">Status</div>
+        <dl>
+          <dt>Loop clock</dt><dd id="sClock">0:00.0</dd>
+          <dt>Selves in play</dt><dd id="sSelves">1</dd>
+          <dt>Your existence</dt><dd id="sExist" class="ok">100%</dd>
+          <dt>Portal</dt><dd id="sPortal" class="ok">open</dd>
+        </dl>
+      </section>
+      <section>
+        <div class="eyebrow">Controls</div>
+        <div class="keys">
+          <kbd>WASD / arrows</kbd><div>move (or drag on the field)</div>
+          <kbd>F (hold)</kbd><div>fast-forward time 4&times;</div>
+          <kbd>R</kbd><div>redo this run</div>
+          <kbd>Z</kbd><div>erase your latest echo</div>
+        </div>
+        <div class="btns">
+          <button id="ffBtn">Hold: fast-forward</button>
+          <button id="rBtn">Redo run</button>
+          <button id="zBtn">Erase echo</button>
+          <button id="resetBtn">Reset level</button>
+        </div>
+      </section>
+      <section>
+        <div class="eyebrow">Legend</div>
+        <div class="legend">
+          <div><span style="background:var(--self)"></span>You, and faded numbered echoes of past runs</div>
+          <div><span style="background:var(--photon)"></span>Plate / door pair. Rings are the signal moving at c</div>
+          <div><span style="background:var(--link-q)"></span>Second plate / door pair</div>
+          <div><span style="background:var(--paradox)"></span>Paradox, or the portal kill switch</div>
+          <div><span style="background:var(--exit)"></span>Exit. Only counts at 100% existence</div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+const TPS=60, SPEED=4, C=6, R=0.3;
+const LINKS={X:'p',Y:'q',Z:'r'};
+const LEVELS=[
+ {name:'Hold the Door',T:20,
+  hint:'The exit door opens only while the gold plate is held, and the signal crosses the room at light speed. You can’t hold the plate and reach the door in time. Stand on the plate for a few seconds, then step into the portal (the swirl). You’ll arrive at 0:00 on the A pad while your past self replays exactly what you did.',
+  map:[
+  "######################",
+  "#S...........#.......#",
+  "#............#.......#",
+  "#..p.........#...E...#",
+  "#............#.......#",
+  "#............X.......#",
+  "#..O......A..#.......#",
+  "#............#.......#",
+  "######################"]},
+ {name:'Grandfather',T:20,
+  hint:'The red switch destroys the portal, and it sits on the only path to the exit. If its signal reaches the portal before your past self steps in, that self never travels back, and so you were never sent. You don’t vanish: you drop into a 50/50 superposition, and the exit won’t take half a person. Watch the diamond on the timeline for when your echo enters.',
+  map:[
+  "######################",
+  "#S.p.....#...........#",
+  "#........#....A......#",
+  "#........#...........#",
+  "#........#...........#",
+  "#........##X##########",
+  "#........#...........#",
+  "#........#####k#######",
+  "#........#...........#",
+  "#.......O#.....E.....#",
+  "######################"]},
+ {name:'Two of Me',T:25,
+  hint:'Two doors in series, and each plate is too far from its door. Use two past selves, or one self with very good timing. Anything an echo is blocked from doing becomes a paradox, so don’t close a door in your own face.',
+  map:[
+  "######################",
+  "#S..........#........#",
+  "#..p........#........#",
+  "#...........X........#",
+  "#...........#........#",
+  "#.....A.....####Y#####",
+  "#...........#........#",
+  "#..........q#........#",
+  "#.O.........#...E....#",
+  "######################"]}
+];
+
+/* ---------- level parsing ---------- */
+function parseLevel(L){
+  const rows=L.map,H=rows.length,W=rows[0].length;
+  const lv={W,H,T:L.T,grid:[],plates:{},doors:[],doorAt:{},spawn:null,arrival:null,portal:null,exit:null,kill:null,killDelay:0,ringMax:{}};
+  for(let y=0;y<H;y++){lv.grid.push([]);for(let x=0;x<W;x++){
+    const ch=rows[y][x]; lv.grid[y].push(ch==='#'?1:0);
+    if(ch==='S')lv.spawn={x:x+.5,y:y+.5};
+    else if(ch==='A')lv.arrival={x:x+.5,y:y+.5};
+    else if(ch==='O')lv.portal={x,y};
+    else if(ch==='E')lv.exit={x,y};
+    else if(ch==='k')lv.kill={x,y};
+    else if('pqr'.includes(ch))lv.plates[ch]={x,y};
+    else if(LINKS[ch]){lv.doorAt[y*W+x]=lv.doors.length;lv.doors.push({x,y,link:LINKS[ch]});}
+  }}
+  for(const d of lv.doors){const p=lv.plates[d.link];const dist=Math.hypot(p.x-d.x,p.y-d.y);d.delay=Math.round(dist/C*TPS);
+    lv.ringMax[d.link]=Math.max(lv.ringMax[d.link]||0,dist+.6);}
+  if(lv.kill){const dist=Math.hypot(lv.kill.x-lv.portal.x,lv.kill.y-lv.portal.y);lv.killDelay=Math.round(dist/C*TPS);lv.ringMax.k=dist+.6;}
+  return lv;
+}
+
+/* ---------- deterministic simulation ---------- */
+function makeSim(lv,selves){
+  const s={tick:0,ents:selves.map(se=>({x:se.start.x,y:se.start.y,gone:false,div:false,divTick:-1,told:false})),hist:{},events:{k:[]},killTick:null};
+  for(const pl in lv.plates){s.hist[pl]=[];s.events[pl]=[];}
+  return s;
+}
+function doorOpen(lv,sim,d,n){const i=n-d.delay;if(i<0)return false;const h=sim.hist[d.link];if(!h.length)return false;return !!h[Math.min(i,h.length-1)];}
+function portalOpen(lv,sim,n){return sim.killTick===null||n-sim.killTick<lv.killDelay;}
+function onTile(e,t){return t&&Math.floor(e.x)===t.x&&Math.floor(e.y)===t.y;}
+function solidAt(lv,sim,tx,ty,n,ign){
+  if(tx<0||ty<0||tx>=lv.W||ty>=lv.H)return true;
+  if(lv.grid[ty][tx]===1)return true;
+  const di=lv.doorAt[ty*lv.W+tx];
+  return di!==undefined&&!ign.has(di)&&!doorOpen(lv,sim,lv.doors[di],n);
+}
+function move(lv,sim,e,code,n){
+  if(code===4||code===undefined)return;
+  const dx=Math.floor(code/3)-1,dy=code%3-1;
+  let sp=SPEED/TPS;if(dx&&dy)sp*=Math.SQRT1_2;
+  const ign=new Set(); // a door that closes on you doesn't trap you
+  for(let ty=Math.floor(e.y-R);ty<=Math.floor(e.y+R);ty++)for(let tx=Math.floor(e.x-R);tx<=Math.floor(e.x+R);tx++){const di=lv.doorAt[ty*lv.W+tx];if(di!==undefined)ign.add(di);}
+  if(dx){let nx=e.x+dx*sp;const tx=dx>0?Math.floor(nx+R):Math.floor(nx-R);
+    for(let ty=Math.floor(e.y-R+1e-6);ty<=Math.floor(e.y+R-1e-6);ty++)if(solidAt(lv,sim,tx,ty,n,ign)){nx=dx>0?tx-R-1e-4:tx+1+R+1e-4;break;}
+    e.x=nx;}
+  if(dy){let ny=e.y+dy*sp;const ty=dy>0?Math.floor(ny+R):Math.floor(ny-R);
+    for(let tx=Math.floor(e.x-R+1e-6);tx<=Math.floor(e.x+R-1e-6);tx++)if(solidAt(lv,sim,tx,ty,n,ign)){ny=dy>0?ty-R-1e-4:ty+1+R+1e-4;break;}
+    e.y=ny;}
+}
+function step(lv,sim,selves){
+  const n=sim.tick,pressed={};let k=false;
+  for(const pl in lv.plates)pressed[pl]=false;
+  for(const e of sim.ents){if(e.gone)continue;
+    for(const pl in lv.plates)if(onTile(e,lv.plates[pl]))pressed[pl]=true;
+    if(onTile(e,lv.kill))k=true;}
+  for(const pl in lv.plates){const prev=n>0?sim.hist[pl][n-1]:false;sim.hist[pl][n]=pressed[pl];if(pressed[pl]!==prev)sim.events[pl].push({tick:n,on:pressed[pl]});}
+  if(k&&sim.killTick===null){sim.killTick=n;sim.events.k.push({tick:n,on:true});}
+  sim.ents.forEach((e,i)=>{if(!e.gone)move(lv,sim,e,selves[i].inputs[n],n);});
+  sim.ents.forEach((e,i)=>{
+    const s=selves[i];if(e.gone||s.end===null)return;
+    if(!e.div){const r=s.rec[n+1];if(r&&Math.hypot(r.x-e.x,r.y-e.y)>.05){e.div=true;e.divTick=n+1;}}
+    if(n===s.end){
+      if(!e.div&&onTile(e,lv.portal)&&portalOpen(lv,sim,n))e.gone=true;
+      else if(!e.div){e.div=true;e.divTick=n;}
+    }
+  });
+  sim.tick=n+1;
+}
+function existence(i,ents){let c=0;for(let j=0;j<i;j++)if(ents[j].div)c++;return Math.pow(.5,c);}
+
+/* ---------- game state ---------- */
+let li=0,lv,selves=[],runSelves=[],sim,frames=[],mode='ready',rewind=null,ff=false,exitToastAt=0;
+const keys={};let joy=null;
+
+function loadLevel(i){
+  li=i;lv=parseLevel(LEVELS[i]);selves=[];newRun();
+  $('win').hidden=true;
+  $('lvIdx').textContent=`Level ${i+1} of ${LEVELS.length}`;
+  $('lvName').textContent=LEVELS[i].name;
+  $('lvHint').textContent=LEVELS[i].hint;
+  document.querySelectorAll('#levels button').forEach((b,j)=>b.classList.toggle('on',j===i));
+  resize();
+}
+function newRun(){
+  const start=selves.length?lv.arrival:lv.spawn;
+  const cur={start,inputs:[],rec:[{x:start.x,y:start.y}],end:null};
+  runSelves=[...selves,cur];sim=makeSim(lv,runSelves);frames=[snap()];mode='ready';
+}
+function snap(){return{tick:sim.tick,ents:sim.ents.map(e=>({x:e.x,y:e.y,gone:e.gone,div:e.div}))};}
+function inputCode(){
+  let dx=0,dy=0;
+  if(keys.ArrowLeft||keys.KeyA)dx-=1;if(keys.ArrowRight||keys.KeyD)dx+=1;
+  if(keys.ArrowUp||keys.KeyW)dy-=1;if(keys.ArrowDown||keys.KeyS)dy+=1;
+  if(joy&&!dx&&!dy){dx=joy.dx>.35?1:joy.dx<-.35?-1:0;dy=joy.dy>.35?1:joy.dy<-.35?-1:0;}
+  return (dx+1)*3+(dy+1);
+}
+function tick(){
+  const ci=runSelves.length-1,n=sim.tick,cur=runSelves[ci];
+  cur.inputs[n]=inputCode();
+  step(lv,sim,runSelves);
+  const e=sim.ents[ci];cur.rec[n+1]={x:e.x,y:e.y};
+  frames.push(snap());
+  sim.ents.forEach((en,i)=>{if(en.div&&!en.told){en.told=true;
+    toast(`Paradox: Echo ${i+1} never made it into the portal. Everyone after it now exists in only half of history.`,true);}});
+  if(onTile(e,lv.portal)&&portalOpen(lv,sim,n)){
+    cur.end=n;selves.push(cur);
+    toast(`Sent back ${fmt(n/TPS)} to 0:00. Echo ${selves.length} will replay that run.`);
+    startRewind(newRun);return true;}
+  if(onTile(e,lv.exit)){
+    const ex=existence(ci,sim.ents);
+    if(ex>=1){win();return true;}
+    if(performance.now()-exitToastAt>2500){exitToastAt=performance.now();
+      toast(`You reached the exit in only ${Math.round(ex*100)}% of histories. Close the paradox first: press R to redo this run.`,true);}
+  }
+  if(sim.tick>=lv.T*TPS){toast(`The loop closed at ${fmt(lv.T)}. This run is erased, but your echoes remain.`,true);startRewind(newRun);return true;}
+  return false;
+}
+function startRewind(cb){
+  if(frames.length<2){cb();return;}
+  mode='rewind';rewind={t:0,dur:Math.min(1.2,.4+frames.length/TPS*.05),cb};
+}
+function win(){
+  mode='won';
+  const last=li===LEVELS.length-1;
+  $('winTitle').textContent=last?'PROTOTYPE COMPLETE':'TIMELINE CONSISTENT';
+  $('winText').textContent=`Escaped at ${fmt(sim.tick/TPS)} with ${runSelves.length} self${runSelves.length>1?'s':''} in play, and every loop closed cleanly.`+(last?' That’s every level in this prototype.':'');
+  $('nextBtn').hidden=last;
+  $('win').hidden=false;
+}
+function restartRun(){if(mode==='rewind')return;$('win').hidden=true;startRewind(newRun);}
+function undoEcho(){if(mode==='rewind')return;$('win').hidden=true;
+  if(selves.length){selves.pop();toast(`Echo ${selves.length+1} erased.`);}newRun();}
+function fmt(s){const m=Math.floor(s/60);return `${m}:${(s-m*60).toFixed(1).padStart(4,'0')}`;}
+
+/* ---------- DOM ---------- */
+function $(id){return document.getElementById(id);}
+const field=$('field'),fctx=field.getContext('2d'),tl=$('tl'),tctx=tl.getContext('2d');
+let DPR=1,cssW=600,cssH=300,TS=20,tlW=600;
+const COL={};
+function readColors(){const cs=getComputedStyle(document.documentElement);
+  ['void','panel','floor','grid','wall','wallhi','ink','muted','self','photon','paradox','exit'].forEach(k=>COL[k]=cs.getPropertyValue('--'+k).trim());
+  COL.p=cs.getPropertyValue('--link-p').trim();COL.q=cs.getPropertyValue('--link-q').trim();COL.r=cs.getPropertyValue('--link-r').trim();COL.k=COL.paradox;}
+function resize(){
+  if(!lv)return;DPR=Math.min(2,window.devicePixelRatio||1);
+  cssW=$('stage').clientWidth;TS=cssW/lv.W;cssH=TS*lv.H;
+  field.style.height=cssH+'px';field.width=Math.round(cssW*DPR);field.height=Math.round(cssH*DPR);
+  tlW=cssW;tl.width=Math.round(tlW*DPR);tl.height=Math.round(68*DPR);
+}
+let toastTimer;
+function toast(msg,warn){const t=$('toast');t.textContent=msg;t.classList.toggle('warn',!!warn);t.style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.opacity=0,3800);}
+
+LEVELS.forEach((L,i)=>{const b=document.createElement('button');b.textContent=`${i+1}. ${L.name}`;b.onclick=()=>loadLevel(i);$('levels').appendChild(b);});
+$('rBtn').onclick=restartRun;$('zBtn').onclick=undoEcho;$('resetBtn').onclick=()=>loadLevel(li);
+$('replayBtn').onclick=()=>loadLevel(li);$('nextBtn').onclick=()=>loadLevel(Math.min(li+1,LEVELS.length-1));
+const ffb=$('ffBtn');
+ffb.addEventListener('pointerdown',()=>{ff=true;ffb.classList.add('on');});
+['pointerup','pointerleave','pointercancel'].forEach(ev=>ffb.addEventListener(ev,()=>{ff=false;ffb.classList.remove('on');}));
+
+const GAME_KEYS=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyW','KeyA','KeyS','KeyD'];
+addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  if(GAME_KEYS.includes(e.code)){keys[e.code]=true;e.preventDefault();}
+  else if(e.code==='KeyF'){ff=true;ffb.classList.add('on');}
+  else if(e.code==='KeyR'&&!e.repeat)restartRun();
+  else if(e.code==='KeyZ'&&!e.repeat)undoEcho();
+});
+addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='KeyF'){ff=false;ffb.classList.remove('on');}});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;ff=false;joy=null;});
+field.addEventListener('pointerdown',e=>{field.setPointerCapture(e.pointerId);joy={ox:e.clientX,oy:e.clientY,dx:0,dy:0};});
+field.addEventListener('pointermove',e=>{if(!joy)return;joy.dx=Math.max(-1,Math.min(1,(e.clientX-joy.ox)/28));joy.dy=Math.max(-1,Math.min(1,(e.clientY-joy.oy)/28));});
+['pointerup','pointercancel'].forEach(ev=>field.addEventListener(ev,()=>{joy=null;}));
+addEventListener('resize',resize);
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- rendering ---------- */
+function rr(c,x,y,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);else c.rect(x,y,w,h);}
+function render(){
+  const c=fctx,ts=TS;c.setTransform(DPR,0,0,DPR,0,0);
+  let ents,tickD;
+  if(mode==='rewind'){const p=Math.min(1,rewind.t/rewind.dur),ep=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+    const f=frames[Math.round((1-ep)*(frames.length-1))];ents=f.ents;tickD=f.tick;}
+  else{ents=sim.ents;tickD=sim.tick;}
+  const now=performance.now()/1000;
+  c.fillStyle=COL.floor;c.fillRect(0,0,cssW,cssH);
+  c.strokeStyle=COL.grid;c.lineWidth=1;c.beginPath();
+  for(let x=0;x<=lv.W;x++){c.moveTo(x*ts+.5,0);c.lineTo(x*ts+.5,cssH);}
+  for(let y=0;y<=lv.H;y++){c.moveTo(0,y*ts+.5);c.lineTo(cssW,y*ts+.5);}
+  c.stroke();
+  for(let y=0;y<lv.H;y++)for(let x=0;x<lv.W;x++)if(lv.grid[y][x]){
+    c.fillStyle=COL.wall;c.fillRect(x*ts,y*ts,ts+.5,ts+.5);
+    if(y+1<lv.H&&!lv.grid[y+1][x]){c.fillStyle=COL.wallhi;c.fillRect(x*ts,(y+1)*ts-2,ts+.5,2);}
+  }
+  const font=w=>`${w} ${Math.max(9,ts*.34)}px "IBM Plex Mono",monospace`;
+  c.textAlign='center';c.textBaseline='middle';
+  // pads
+  c.font=font(500);
+  [[lv.spawn,'S'],[lv.arrival,'A']].forEach(([p,l])=>{if(!p)return;c.globalAlpha=.55;c.strokeStyle=COL.muted;c.setLineDash([3,3]);
+    c.beginPath();c.arc(p.x*ts,p.y*ts,ts*.38,0,7);c.stroke();c.setLineDash([]);c.fillStyle=COL.muted;c.fillText(l,p.x*ts,p.y*ts+1);c.globalAlpha=1;});
+  // plates + kill switch
+  const plates=Object.entries(lv.plates);if(lv.kill)plates.push(['k',lv.kill]);
+  for(const [pl,t] of plates){
+    const on=pl==='k'?(sim.killTick!==null&&sim.killTick<tickD):(tickD>0&&sim.hist[pl][tickD-1]);
+    const col=COL[pl],i=ts*.16;
+    rr(c,t.x*ts+i,t.y*ts+i,ts-2*i,ts-2*i,3);c.globalAlpha=on?.9:.14;c.fillStyle=col;c.fill();c.globalAlpha=1;c.lineWidth=2;c.strokeStyle=col;c.stroke();
+    if(pl==='k'){c.strokeStyle=on?COL.void:col;c.lineWidth=2;const a=ts*.32,b=ts*.68;c.beginPath();c.moveTo(t.x*ts+a,t.y*ts+a);c.lineTo(t.x*ts+b,t.y*ts+b);c.moveTo(t.x*ts+b,t.y*ts+a);c.lineTo(t.x*ts+a,t.y*ts+b);c.stroke();}
+  }
+  // doors
+  for(const d of lv.doors){const open=doorOpen(lv,sim,d,tickD),col=COL[d.link],i=ts*.06;
+    if(!open){c.fillStyle=col;c.globalAlpha=.85;c.fillRect(d.x*ts+i,d.y*ts+i,ts-2*i,ts-2*i);c.globalAlpha=1;
+      c.strokeStyle=COL.void;c.lineWidth=1.5;c.beginPath();for(let k=1;k<4;k++){c.moveTo(d.x*ts+k*ts/4,d.y*ts+i);c.lineTo(d.x*ts+k*ts/4,d.y*ts+ts-i);}c.stroke();}
+    else{c.strokeStyle=col;c.globalAlpha=.55;c.setLineDash([3,3]);c.lineWidth=1.5;c.strokeRect(d.x*ts+i,d.y*ts+i,ts-2*i,ts-2*i);c.setLineDash([]);c.globalAlpha=1;}
+  }
+  // portal
+  {const p=lv.portal,cx=(p.x+.5)*ts,cy=(p.y+.5)*ts,open=portalOpen(lv,sim,tickD),rot=reduceMotion?0:now*2.2;
+    if(open){for(let k=0;k<3;k++){c.strokeStyle=k===1?COL.photon:COL.self;c.lineWidth=2;c.beginPath();
+      c.arc(cx,cy,ts*(.16+k*.11),rot*(k%2?-1:1)+k,rot*(k%2?-1:1)+k+4.2);c.stroke();}}
+    else{c.strokeStyle=COL.muted;c.lineWidth=2;c.beginPath();c.arc(cx,cy,ts*.36,0,7);c.stroke();
+      c.beginPath();c.moveTo(cx-ts*.25,cy-ts*.25);c.lineTo(cx+ts*.25,cy+ts*.25);c.moveTo(cx+ts*.25,cy-ts*.25);c.lineTo(cx-ts*.25,cy+ts*.25);c.stroke();}}
+  // exit
+  {const p=lv.exit,cx=(p.x+.5)*ts,cy=(p.y+.5)*ts,s=ts*.34;c.fillStyle=COL.exit;c.globalAlpha=.9;c.beginPath();c.moveTo(cx,cy-s);c.lineTo(cx+s,cy);c.lineTo(cx,cy+s);c.lineTo(cx-s,cy);c.closePath();c.fill();c.globalAlpha=1;}
+  // light-speed signal rings
+  for(const pl in sim.events){const src=pl==='k'?lv.kill:lv.plates[pl];if(!src)continue;const max=lv.ringMax[pl]||3;
+    for(const ev of sim.events[pl]){if(ev.tick>tickD)continue;const r=(tickD-ev.tick)/TPS*C;if(r>max)continue;
+      c.strokeStyle=COL[pl];c.globalAlpha=.8*(1-r/max*.75);c.lineWidth=ev.on?2:1.5;c.setLineDash(ev.on?[]:[5,5]);
+      c.beginPath();c.arc((src.x+.5)*ts,(src.y+.5)*ts,Math.max(.1,r*ts),0,7);c.stroke();}}
+  c.setLineDash([]);c.globalAlpha=1;
+  // echoes' recorded futures
+  const ci=runSelves.length-1;
+  for(let i=0;i<ci;i++){const s=runSelves[i],e=ents[i];if(e.gone||e.div)continue;c.fillStyle=COL.self;c.globalAlpha=.22;
+    for(let t=tickD;t<=s.end;t+=7){const p=s.rec[t];if(p){c.beginPath();c.arc(p.x*ts,p.y*ts,1.6,0,7);c.fill();}}}
+  c.globalAlpha=1;
+  // selves
+  c.font=font(600);
+  ents.forEach((e,i)=>{
+    if(e.gone)return;const isCur=i===ci,ex=existence(i,ents),s=runSelves[i];
+    const flick=.35+.65*(reduceMotion?.6:(.5+.5*Math.sin(now*11+i)));
+    if(e.div&&s.rec[tickD]&&tickD<=s.end+1){const g=s.rec[tickD];c.strokeStyle=COL.paradox;c.globalAlpha=.6;c.setLineDash([3,3]);
+      c.beginPath();c.arc(g.x*ts,g.y*ts,R*ts,0,7);c.stroke();c.setLineDash([]);}
+    let col=COL.self,a=isCur?1:.5;
+    if(e.div){col=COL.paradox;a=.85*flick;}else if(ex<1)a*=flick;
+    c.globalAlpha=a;c.fillStyle=col;c.beginPath();c.arc(e.x*ts,e.y*ts,R*ts,0,7);c.fill();
+    if(isCur){c.globalAlpha=1;c.strokeStyle=COL.ink;c.lineWidth=2;c.stroke();}
+    c.globalAlpha=1;c.fillStyle=COL.void;c.fillText(isCur?'•':String(i+1),e.x*ts,e.y*ts+1);
+    if(ex<1){c.fillStyle=COL.paradox;c.fillText(Math.round(ex*100)+'%',e.x*ts,e.y*ts-R*ts-ts*.32);}
+  });
+  c.globalAlpha=1;
+  // mode overlays
+  if(mode==='ready'){c.fillStyle=COL.void;c.globalAlpha=.55;c.fillRect(0,cssH/2-ts*.8,cssW,ts*1.6);c.globalAlpha=1;
+    c.fillStyle=COL.ink;c.font=`500 ${Math.max(11,ts*.42)}px "IBM Plex Mono",monospace`;
+    c.fillText(runSelves.length>1?`Run ${runSelves.length}: ${runSelves.length-1} echo${runSelves.length>2?'es':''} waiting. Move to start the clock.`:'Move to start the clock',cssW/2,cssH/2);}
+  if(mode==='rewind'){c.fillStyle=COL.self;c.globalAlpha=.08;c.fillRect(0,0,cssW,cssH);c.globalAlpha=1;
+    c.fillStyle=COL.self;c.font=`500 ${Math.max(11,ts*.5)}px "IBM Plex Mono",monospace`;c.fillText('◀◀  rewinding to 0:00',cssW/2,ts*.6);}
+  renderTL(tickD,ents);
+  // status
+  $('sClock').textContent=`${fmt(tickD/TPS)} / ${fmt(lv.T)}`;
+  $('sSelves').textContent=`${runSelves.length} (you + ${runSelves.length-1} echo${runSelves.length===2?'':'es'})`;
+  const ex=existence(ci,ents),se=$('sExist');se.textContent=Math.round(ex*100)+'%';se.className=ex<1?'bad':'ok';
+  const po=portalOpen(lv,sim,tickD),sp=$('sPortal');sp.textContent=po?'open':'destroyed';sp.className=po?'ok':'bad';
+}
+function renderTL(tickD,ents){
+  const c=tctx,w=tlW;c.setTransform(DPR,0,0,DPR,0,0);
+  c.fillStyle=COL.panel;c.fillRect(0,0,w,68);
+  const x0=16,x1=w-16,T=lv.T*TPS,X=t=>x0+(x1-x0)*Math.max(0,Math.min(1,t/T));
+  c.fillStyle=COL.grid;c.fillRect(x0,22,x1-x0,6);
+  c.fillStyle=COL.self;c.globalAlpha=.4;c.fillRect(x0,22,X(tickD)-x0,6);c.globalAlpha=1;
+  c.font='500 10px "IBM Plex Mono",monospace';c.textAlign='center';c.textBaseline='middle';
+  for(let s=0;s<=lv.T;s++){const x=X(s*TPS);c.fillStyle=COL.muted;c.fillRect(Math.round(x),30,1,s%5?3:6);if(s%5===0&&(x1-x0)>260)c.fillText(s+'s',x,43);}
+  let row=0;
+  for(const pl in lv.plates){const h=sim.hist[pl],end=Math.min(tickD,h.length);let st=-1;c.fillStyle=COL[pl];c.globalAlpha=.8;
+    for(let t=0;t<=end;t++){const on=t<end&&h[t];if(on&&st<0)st=t;if(!on&&st>=0){c.fillRect(X(st),52+row*5,Math.max(1.5,X(t)-X(st)),3);st=-1;}}
+    c.globalAlpha=1;row++;}
+  if(sim.killTick!==null&&sim.killTick<tickD){const x=X(sim.killTick+lv.killDelay);c.fillStyle=COL.paradox;c.fillRect(x-1,14,2,20);c.textAlign='left';c.fillText('portal dies',Math.min(x+4,x1-60),9);c.textAlign='center';}
+  const ci=runSelves.length-1;
+  for(let i=0;i<ci;i++){const s=runSelves[i],x=X(s.end),div=ents[i].div,col=div?COL.paradox:COL.self;
+    c.fillStyle=col;c.beginPath();c.moveTo(x,9);c.lineTo(x+5,14);c.lineTo(x,19);c.lineTo(x-5,14);c.closePath();c.fill();
+    c.textAlign='left';c.fillText(String(i+1),x+7,14);c.textAlign='center';
+    const dt=sim.ents[i].divTick;if(div&&dt>=0){c.fillStyle=COL.paradox;c.fillRect(X(dt)-1,20,2,10);}}
+  c.fillStyle=COL.photon;c.fillRect(X(tickD)-1,18,2,16);
+}
+
+/* ---------- loop ---------- */
+let last=performance.now(),acc=0;
+function frame(now){
+  const dt=Math.min(.1,(now-last)/1000);last=now;
+  if(mode==='ready'&&inputCode()!==4)mode='run';
+  if(mode==='run'){acc+=dt*TPS*(ff?4:1);let guard=0;while(acc>=1&&guard++<400){acc-=1;if(tick()){acc=0;break;}}}else acc=0;
+  if(mode==='rewind'){rewind.t+=dt;if(rewind.t>=rewind.dur){const cb=rewind.cb;rewind=null;cb();}}
+  render();requestAnimationFrame(frame);
+}
+function start(data){readColors();loadLevel(Math.min(LEVELS.length-1,(data&&data.li)||0));requestAnimationFrame(frame);}
+try{window.claude?.hot?.snapshot?.(()=>({li}));}catch(e){}
+if(window.claude?.hot?.ready)window.claude.hot.ready(start);else start(window.claude?.hot?.data??{});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{});
+})();
+</script>
+</body>
+</html>
