@@ -11,6 +11,7 @@ Where we left off, and what to pick up next. See [DESIGN.md](DESIGN.md) for the 
 ## Next session
 
 ### 1. Playtest Echo Sight by hand (first)
+How: open `echo-sight/index.html` in Chrome or Edge (double-click it, or run `start echo-sight\index.html` from the repo folder). Play with a mouse. Jot notes in `PLAYTEST.md` at the repo root as you go: level, run, what happened, how it felt. If you're stuck, the reference solutions are in `echo-sight/tests/solutions.js` (spoilers).
 - [ ] Play all four levels with mouse and keyboard. Note where it feels unfair, confusing or too easy.
 - [ ] Tune the feel: view cone (90°, 9 tiles), spotted grace (0.13 s), prophecy grace (0.25 s), walk speed.
 - [ ] Is it clear *why* a paradox happened? The toast names the echo and the reason. Is that enough, or do we need a replay of the moment?
