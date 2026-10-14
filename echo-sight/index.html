@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Echo Sight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: same console as Causal Diamond (play field + timeline left, briefing right). Deliberately single dark theme.
+   New here: amber is sight (view cones, memories), red is being spotted. */
+:root{
+  --void:#090b17; --panel:#10132a; --floor:#12152d; --grid:#1d2247; --wall:#2b3166; --wallhi:#3b4386; --glass:#5fb3c9;
+  --ink:#e7e9f6; --muted:#8a90b8;
+  --self:#7fd6ff; --sight:#f5b14c; --photon:#f2c14e; --paradox:#ff5c8a; --exit:#8ef0b0; --figure:#e9e2ff;
+  --link-p:#f2c14e; --link-q:#c39bff; --link-r:#ff9f6b;
+  --display:'Michroma','Eurostile','Bank Gothic',system-ui,sans-serif;
+  --body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--void);color:var(--ink)}
+body{margin:0}
+[hidden]{display:none!important}
+body{font-family:var(--body);font-size:15px;line-height:1.5;padding-block:20px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1200px;margin:0 auto;display:grid;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(20px,3.2vw,30px);letter-spacing:.08em;margin:0;text-wrap:balance}
+.sub{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.04em;margin-top:4px}
+.levels{display:flex;flex-wrap:wrap;gap:8px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+@media (max-width:920px){.main{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;border:1px solid var(--grid);background:var(--panel);border-radius:6px;overflow:hidden;min-width:0}
+#field{display:block;width:100%;touch-action:none;cursor:crosshair}
+#tl{display:block;width:100%;height:68px;border-top:1px solid var(--grid)}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:color-mix(in srgb,var(--void) 86%,transparent);padding:16px}
+.card{max-width:420px;text-align:center;display:grid;gap:12px}
+.card h2{font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:.06em;margin:0}
+.card p{margin:0;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+aside{display:grid;gap:14px;min-width:0}
+section{border:1px solid var(--grid);border-radius:6px;padding:14px;display:grid;gap:10px;background:var(--panel)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.lvname{font-family:var(--display);font-size:16px;letter-spacing:.05em}
+.hint{margin:0;color:var(--ink);opacity:.9;font-size:14px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums}
+dt{color:var(--muted)} dd{margin:0;text-align:right}
+.ok{color:var(--exit)} .bad{color:var(--paradox)} .warn{color:var(--sight)}
+button{font-family:var(--mono);font-size:12.5px;background:transparent;color:var(--ink);border:1px solid var(--wall);border-radius:4px;padding:7px 11px;cursor:pointer;letter-spacing:.02em}
+button:hover{border-color:var(--sight)}
+button:focus-visible{outline:2px solid var(--sight);outline-offset:2px}
+button.on{border-color:var(--sight);color:var(--sight)}
+button.primary{background:var(--sight);color:var(--void);border-color:var(--sight);font-weight:500}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px;color:var(--muted);margin:0}
+kbd{font-family:var(--mono);font-size:11.5px;color:var(--ink);border:1px solid var(--wall);border-bottom-width:2px;border-radius:3px;padding:1px 5px;white-space:nowrap}
+.legend{display:grid;gap:6px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+.toast{position:absolute;left:12px;right:12px;top:12px;margin:0 auto;max-width:600px;font-family:var(--mono);font-size:12.5px;background:color-mix(in srgb,var(--void) 90%,transparent);border:1px solid var(--wall);border-radius:4px;padding:8px 12px;text-align:center;transition:opacity .3s;pointer-events:none}
+.toast.warn{border-color:var(--paradox);color:var(--paradox)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>ECHO SIGHT</h1>
+      <div class="sub">stealth against yourself &middot; you see only what is in your view cone, and so do they</div>
+    </div>
+    <div class="levels" id="levels"></div>
+  </header>
+
+  <div class="main">
+    <div class="stage" id="stage">
+      <canvas id="field" aria-label="Play field"></canvas>
+      <canvas id="tl" aria-label="Timeline"></canvas>
+      <div class="toast" id="toast" style="opacity:0"></div>
+      <div class="overlay" id="win" hidden>
+        <div class="card">
+          <h2 id="winTitle">TIMELINE CONSISTENT</h2>
+          <p id="winText"></p>
+          <div class="row"><button id="replayBtn">Replay level</button><button class="primary" id="nextBtn">Next level</button></div>
+        </div>
+      </div>
+    </div>
+
+    <aside>
+      <section>
+        <div class="eyebrow" id="lvIdx">Level 1</div>
+        <div class="lvname" id="lvName"></div>
+        <p class="hint" id="lvHint"></p>
+      </section>
+      <section>
+        <div class="eyebrow">Status</div>
+        <dl>
+          <dt>Loop clock</dt><dd id="sClock">0:00.0</dd>
+          <dt>Selves in play</dt><dd id="sSelves">1</dd>
+          <dt>Your existence</dt><dd id="sExist" class="ok">100%</dd>
+          <dt>Watched by</dt><dd id="sSeen" class="ok">nobody</dd>
+        </dl>
+      </section>
+      <section>
+        <div class="eyebrow">Controls</div>
+        <div class="keys">
+          <kbd>WASD / arrows</kbd><div>move (or drag on the field)</div>
+          <kbd>Mouse</kbd><div>look. Without a mouse, Q / E turn, or you face where you walk</div>
+          <kbd>Space (hold)</kbd><div>Echo Sight: see every past self and its cone</div>
+          <kbd>F (hold)</kbd><div>fast-forward time 4&times;</div>
+          <kbd>R</kbd><div>redo this run</div>
+          <kbd>Z</kbd><div>erase your latest echo</div>
+        </div>
+        <div class="btns">
+          <button id="sightBtn">Hold: Echo Sight</button>
+          <button id="ffBtn">Hold: fast-forward</button>
+          <button id="rBtn">Redo run</button>
+          <button id="zBtn">Erase echo</button>
+          <button id="resetBtn">Reset level</button>
+        </div>
+      </section>
+      <section>
+        <div class="eyebrow">Legend</div>
+        <div class="legend">
+          <div><span style="background:var(--self)"></span>You, and numbered echoes of past runs</div>
+          <div><span style="background:var(--sight)"></span>A past self&rsquo;s view cone, and figures it remembers seeing</div>
+          <div><span style="background:var(--figure)"></span>The figure. On later runs, its outline is where you must be</div>
+          <div><span style="background:var(--glass)"></span>Glass: blocks movement, not sight</div>
+          <div><span style="background:var(--photon)"></span>Plate / door pair. Rings are the signal moving at c</div>
+          <div><span style="background:repeating-linear-gradient(45deg,var(--link-p) 0 3px,var(--void) 3px 5px)"></span>Shutter: open by default, closes while its plate is held</div>
+          <div><span style="background:var(--paradox)"></span>Spotted, or a paradox</div>
+          <div><span style="background:var(--exit)"></span>Exit. Only counts at 100% existence</div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script id="engine">
+/* Engine: pure, deterministic simulation and level data. No DOM access, so tests/verify-levels.js can run it in Node.
+   Every self records, each tick, which figures it could see (by tile). When that self is later replayed as an echo,
+   what it sees must match that memory: seeing someone new means you were spotted, and missing someone it remembers
+   means a prophecy went unfulfilled. Either way the echo's history no longer holds, and it becomes a paradox. */
+(function(root){
+const TPS=60, SPEED=4, C=6, R=0.3;
+const FOV=Math.PI/2, RANGE=9;  // 90 degree view, 9 tiles deep
+const SEEN_GRACE=8, MISS_GRACE=15; // being spotted counts after 0.13 s; a missing figure after 0.25 s
+const LINKS={X:'p',Y:'q',Z:'r',x:'p',y:'q',z:'r'};
+const LEVELS=[
+ {name:'Blind Spot',T:20,
+  hint:'You need your past self on the gold plate while you slip through the door. But your past self has eyes, and it never saw you. If it sees you now, its memory is wrong and the timeline splits. On your first run, hold the plate facing away from the door, then take the portal.',
+  map:[
+  "######################",
+  "#S........#..........#",
+  "#.........#..........#",
+  "#..p......#....E.....#",
+  "#.........#..........#",
+  "#.........X..........#",
+  "#..O......#..........#",
+  "#######.###..........#",
+  "#A........#..........#",
+  "######################"]},
+ {name:'The Figure',T:20,
+  hint:'On your first run, someone is already standing on the gold plate behind the glass, holding the door open for you. Go through, hold the purple plate for a while, then take the portal. Next run, the figure is gone. It was you. Stand where it stood for as long as your past self could see it, then leave by the purple door.',
+  phantom:[[0,11,4],[0.5,11,2],[8,11,2]],
+  map:[
+  "######################",
+  "#S.......#...Y...E...#",
+  "#........w.p.#.......#",
+  "#........w...#.......#",
+  "#........#.A.#########",
+  "#........#####.......#",
+  "#........X.....q.....#",
+  "#........#.......O...#",
+  "######################"]},
+ {name:'Two Watchers',T:25,
+  hint:'Two doors, two plates, two past selves, and every one of them can see. Your second self has to reach its plate without being seen by your first. Then your third has to get past both. Where each self looks while it waits decides whether the next one can move.',
+  map:[
+  "######################",
+  "#S......#....#.......#",
+  "#.......#....#.......#",
+  "#...p...X....Y...E...#",
+  "#.......#....#.......#",
+  "#.......#....#.......#",
+  "#.....q.#....#.......#",
+  "###.#####....#.......#",
+  "#A..O...#....#.......#",
+  "######################"]},
+ {name:'Retrace',T:25,
+  hint:'The figure is back on the gold plate, and this time the gold plate also shuts the shutter in front of the portal. Your first self needs the figure while it is in the first room, and needs the shutter open when it heads home. Your way out passes the glass your first self can see through from the purple plate.',
+  phantom:[[0,11,1],[0.25,11,2],[8,11,2]],
+  map:[
+  "######################",
+  "#S.......#.A.#.......#",
+  "#........w.p.#.......#",
+  "#........w...w...q...#",
+  "#........#...w.......#",
+  "#........###Y#.......#",
+  "#........#.E.#.......#",
+  "#........#####.......#",
+  "#........X...........#",
+  "#........#########x###",
+  "#........#########O..#",
+  "######################"]}
+];
+
+function parseLevel(L){
+  const rows=L.map,H=rows.length,W=rows[0].length;
+  const lv={W,H,T:L.T,grid:[],glass:[],plates:{},doors:[],doorAt:{},spawn:null,arrival:null,portal:null,exit:null,ringMax:{},phantom:null};
+  for(let y=0;y<H;y++){lv.grid.push([]);lv.glass.push([]);for(let x=0;x<W;x++){
+    const ch=rows[y][x]; lv.grid[y].push(ch==='#'||ch==='w'?1:0); lv.glass[y].push(ch==='w');
+    if(ch==='S')lv.spawn={x:x+.5,y:y+.5};
+    else if(ch==='A')lv.arrival={x:x+.5,y:y+.5};
+    else if(ch==='O')lv.portal={x,y};
+    else if(ch==='E')lv.exit={x,y};
+    else if('pqr'.includes(ch))lv.plates[ch]={x,y};
+    else if(LINKS[ch]){lv.doorAt[y*W+x]=lv.doors.length;lv.doors.push({x,y,link:LINKS[ch],inv:ch===ch.toLowerCase()});}
+  }}
+  for(const d of lv.doors){const p=lv.plates[d.link];const dist=Math.hypot(p.x-d.x,p.y-d.y);d.delay=Math.round(dist/C*TPS);
+    lv.ringMax[d.link]=Math.max(lv.ringMax[d.link]||0,dist+.6);}
+  if(L.phantom)lv.phantom=L.phantom.map(([t,x,y])=>({t:Math.round(t*TPS),x:x+.5,y:y+.5}));
+  return lv;
+}
+// The figure seen on the first run: a scripted path of [tick, x, y] waypoints. It exists only while no echoes do.
+function phantomAt(lv,n){
+  const P=lv.phantom;if(!P||n<P[0].t||n>P[P.length-1].t)return null;
+  for(let i=1;i<P.length;i++)if(n<=P[i].t){const a=P[i-1],b=P[i],f=b.t===a.t?1:(n-a.t)/(b.t-a.t);return{x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f};}
+  return null;
+}
+function makeSim(lv,selves){
+  const s={tick:0,phantomOn:selves.length===1&&!!lv.phantom,
+    ents:selves.map(se=>({x:se.start.x,y:se.start.y,sx:se.start.x,sy:se.start.y,ang:0,gone:false,div:false,divTick:-1,why:'',mis:0,sees:[],told:false})),
+    ph:null,hist:{},events:{}};
+  for(const pl in lv.plates){s.hist[pl]=[];s.events[pl]=[];}
+  if(s.phantomOn)s.ph=phantomAt(lv,0);
+  return s;
+}
+function doorOpen(lv,sim,d,n){
+  const i=n-d.delay;let held=false;
+  if(i>=0){const h=sim.hist[d.link];if(h.length)held=!!h[Math.min(i,h.length-1)];}
+  return d.inv?!held:held;
+}
+function portalOpen(){return true;}
+function onTile(e,t){return !!t&&Math.floor(e.x)===t.x&&Math.floor(e.y)===t.y;}
+function doorIndexAt(lv,x,y){return lv.doorAt[Math.floor(y)*lv.W+Math.floor(x)];}
+function solidAt(lv,sim,tx,ty,n){
+  if(tx<0||ty<0||tx>=lv.W||ty>=lv.H)return true;
+  if(lv.grid[ty][tx]===1)return true;
+  const di=lv.doorAt[ty*lv.W+tx];
+  return di!==undefined&&!doorOpen(lv,sim,lv.doors[di],n);
+}
+// Sight passes through glass and open doors, and stops at walls and closed doors.
+function opaqueAt(lv,sim,tx,ty,n){
+  if(tx<0||ty<0||tx>=lv.W||ty>=lv.H)return true;
+  if(lv.grid[ty][tx]===1&&!lv.glass[ty][tx])return true;
+  const di=lv.doorAt[ty*lv.W+tx];
+  return di!==undefined&&!doorOpen(lv,sim,lv.doors[di],n);
+}
+function lineOfSight(lv,sim,x0,y0,x1,y1,n){
+  const d=Math.hypot(x1-x0,y1-y0),steps=Math.ceil(d/.05);
+  const ex=Math.floor(x1),ey=Math.floor(y1);
+  for(let k=1;k<steps;k++){const x=x0+(x1-x0)*k/steps,y=y0+(y1-y0)*k/steps,tx=Math.floor(x),ty=Math.floor(y);
+    if(tx===ex&&ty===ey)break;
+    if(opaqueAt(lv,sim,tx,ty,n))return false;}
+  return true;
+}
+function angleDiff(a,b){let d=a-b;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return Math.abs(d);}
+function canSee(lv,sim,v,t,n){
+  const dx=t.x-v.x,dy=t.y-v.y,d=Math.hypot(dx,dy);
+  if(d>RANGE||d<2*R)return false; // bodies stacked on one spot (e.g. arrivals at 0:00) don't count as seeing each other
+  if(angleDiff(Math.atan2(dy,dx),v.ang)>FOV/2)return false;
+  return lineOfSight(lv,sim,v.x,v.y,t.x,t.y,n);
+}
+// How far sight reaches along one ray (for drawing view cones).
+function rayLength(lv,sim,x,y,a,n){
+  const dx=Math.cos(a)*.05,dy=Math.sin(a)*.05;
+  for(let k=1;k*.05<RANGE;k++){const px=x+dx*k,py=y+dy*k;if(opaqueAt(lv,sim,Math.floor(px),Math.floor(py),n))return k*.05;}
+  return RANGE;
+}
+function figures(sim){
+  const f=[];sim.ents.forEach((e,i)=>{if(!e.gone)f.push({i,x:e.x,y:e.y});});
+  if(sim.ph)f.push({i:-1,x:sim.ph.x,y:sim.ph.y});
+  return f;
+}
+// What self i sees right now: the tiles of every figure in view, as a canonical string.
+function viewOf(lv,sim,i,n){
+  const v=sim.ents[i],seen=[],keys=[];
+  for(const f of figures(sim)){if(f.i===i)continue;
+    if(canSee(lv,sim,v,f,n)){seen.push(f.i);keys.push(Math.floor(f.x)+','+Math.floor(f.y));}}
+  return{seen,key:[...new Set(keys)].sort().join(';')};
+}
+function move(lv,sim,e,code,n){
+  if(code===4||code===undefined)return;
+  const dx=Math.floor(code/3)-1,dy=code%3-1;
+  let sp=SPEED/TPS;if(dx&&dy)sp*=Math.SQRT1_2;
+  if(dx){let nx=e.x+dx*sp;const tx=dx>0?Math.floor(nx+R):Math.floor(nx-R);
+    for(let ty=Math.floor(e.y-R+1e-6);ty<=Math.floor(e.y+R-1e-6);ty++)if(solidAt(lv,sim,tx,ty,n)){nx=dx>0?tx-R-1e-4:tx+1+R+1e-4;break;}
+    e.x=nx;}
+  if(dy){let ny=e.y+dy*sp;const ty=dy>0?Math.floor(ny+R):Math.floor(ny-R);
+    for(let tx=Math.floor(e.x-R+1e-6);tx<=Math.floor(e.x+R-1e-6);tx++)if(solidAt(lv,sim,tx,ty,n)){ny=dy>0?ty-R-1e-4:ty+1+R+1e-4;break;}
+    e.y=ny;}
+}
+function step(lv,sim,selves){
+  const n=sim.tick,pressed={};
+  for(const pl in lv.plates)pressed[pl]=false;
+  for(const f of figures(sim))for(const pl in lv.plates)if(onTile(f,lv.plates[pl]))pressed[pl]=true;
+  for(const pl in lv.plates){const prev=n>0?sim.hist[pl][n-1]:false;sim.hist[pl][n]=pressed[pl];if(pressed[pl]!==prev)sim.events[pl].push({tick:n,on:pressed[pl]});}
+  sim.ents.forEach((e,i)=>{if(e.gone)return;
+    const inp=selves[i].inputs[n];
+    // A door that shuts while you're inside it shoves you back the way you came.
+    const di=doorIndexAt(lv,e.x,e.y);
+    if(di!==undefined&&!doorOpen(lv,sim,lv.doors[di],n)){e.x=e.sx;e.y=e.sy;}
+    if(inp){move(lv,sim,e,inp.c,n);e.ang=inp.a;}
+    if(doorIndexAt(lv,e.x,e.y)===undefined){e.sx=e.x;e.sy=e.y;}
+  });
+  if(sim.phantomOn)sim.ph=phantomAt(lv,n+1);
+  sim.ents.forEach((e,i)=>{
+    if(e.gone)return;const s=selves[i],view=viewOf(lv,sim,i,n);e.sees=view.seen;
+    if(s.end===null){s.mem[n]=view.key;return;}
+    if(e.div||n>s.end)return;
+    const want=s.mem[n]||'';
+    if(view.key!==want){
+      const now=new Set(view.key?view.key.split(';'):[]),missing=want.split(';').some(k=>k&&!now.has(k));
+      e.mis++;e.why=missing?'missing':'seen';
+      if(e.mis>(missing?MISS_GRACE:SEEN_GRACE)){e.div=true;e.divTick=n;}
+    }else{e.mis=0;e.why='';}
+  });
+  sim.ents.forEach((e,i)=>{
+    const s=selves[i];if(e.gone||s.end===null)return;
+    if(!e.div){const r=s.rec[n+1];if(r&&Math.hypot(r.x-e.x,r.y-e.y)>.05){e.div=true;e.divTick=n+1;e.why='blocked';}}
+    if(n===s.end){
+      if(!e.div&&onTile(e,lv.portal))e.gone=true;
+      else if(!e.div){e.div=true;e.divTick=n;e.why='blocked';}
+    }
+  });
+  sim.tick=n+1;
+}
+// Each self that failed to travel back halves the existence of every self after it.
+function existence(i,ents){let c=0;for(let j=0;j<i;j++)if(ents[j].div)c++;return Math.pow(.5,c);}
+// Leaving through the exit only counts if the rest of the loop still plays out consistently without you.
+function strandedAfterExit(lv,sim,selves,ci){
+  const c={tick:sim.tick,phantomOn:sim.phantomOn,ph:sim.ph,ents:sim.ents.map(e=>({...e})),hist:{},events:{}};
+  for(const pl in sim.hist){c.hist[pl]=sim.hist[pl].slice();c.events[pl]=[];}
+  c.ents[ci].gone=true;
+  const ghost={...selves[ci],end:null,mem:[]},rs=selves.slice();rs[ci]=ghost;
+  let end=-1;for(let j=0;j<ci;j++)end=Math.max(end,selves[j].end);
+  while(c.tick<=end)step(lv,c,rs);
+  const j=c.ents.findIndex((e,k)=>k<ci&&e.div);
+  return j<0?null:{echo:j+1,tick:c.ents[j].divTick,why:c.ents[j].why};
+}
+
+root.ESEngine={TPS,SPEED,C,R,FOV,RANGE,SEEN_GRACE,MISS_GRACE,LEVELS,parseLevel,phantomAt,makeSim,doorOpen,portalOpen,onTile,canSee,rayLength,step,existence,strandedAfterExit};
+})(typeof window!=='undefined'?window:globalThis);
+</script>
+<script>
+(function(){
+const E=window.ESEngine;
+const {TPS,R,FOV,RANGE,LEVELS,doorOpen,onTile,existence}=E;
+
+/* ---------- game state ---------- */
+let li=0,lv,selves=[],runSelves=[],sim,frames=[],mode='ready',rewind=null,ff=false,sight=false,exitToastAt=0;
+let driver=null,speed=1; // driver: optional scripted input (used by tests/screenshot.cjs)
+let ang=0,mouse=null,kick=false; // kick: any key or click starts the clock, so a run can begin by waiting
+const keys={};let joy=null;
+
+function loadLevel(i){
+  li=i;lv=E.parseLevel(LEVELS[i]);selves=[];newRun();
+  $('win').hidden=true;
+  $('lvIdx').textContent=`Level ${i+1} of ${LEVELS.length}`;
+  $('lvName').textContent=LEVELS[i].name;
+  $('lvHint').textContent=LEVELS[i].hint;
+  document.querySelectorAll('#levels button').forEach((b,j)=>b.classList.toggle('on',j===i));
+  resize();
+}
+function newRun(){
+  const start=selves.length?lv.arrival:lv.spawn;
+  const cur={start,inputs:[],rec:[{x:start.x,y:start.y}],mem:[],end:null};
+  runSelves=[...selves,cur];sim=E.makeSim(lv,runSelves);frames=[snap()];mode='ready';ang=0;kick=false;
+}
+function snap(){return{tick:sim.tick,ph:sim.ph,ents:sim.ents.map(e=>({x:e.x,y:e.y,ang:e.ang,gone:e.gone,div:e.div}))};}
+function moveCode(){
+  let dx=0,dy=0;
+  if(keys.ArrowLeft||keys.KeyA)dx-=1;if(keys.ArrowRight||keys.KeyD)dx+=1;
+  if(keys.ArrowUp||keys.KeyW)dy-=1;if(keys.ArrowDown||keys.KeyS)dy+=1;
+  if(joy&&!dx&&!dy){dx=joy.dx>.35?1:joy.dx<-.35?-1:0;dy=joy.dy>.35?1:joy.dy<-.35?-1:0;}
+  return (dx+1)*3+(dy+1);
+}
+// Facing: the mouse when it's over the field, else Q/E to turn, else the direction you walk.
+function input(){
+  const ci=runSelves.length-1;
+  if(driver)return driver(sim,ci,lv);
+  const c=moveCode(),e=sim.ents[ci];
+  if(mouse)ang=Math.atan2(mouse.y/TS-e.y,mouse.x/TS-e.x);
+  else if(keys.KeyQ||keys.KeyE)ang+=(keys.KeyE?1:-1)*3.5/TPS;
+  else if(c!==4)ang=Math.atan2(c%3-1,Math.floor(c/3)-1);
+  return{c,a:ang};
+}
+const WHY={
+  seen:i=>`Echo ${i} saw you. It never saw anyone there, so that history can’t have happened.`,
+  missing:i=>`Echo ${i} remembers seeing someone where nobody is now. You had to be there.`,
+  blocked:i=>`Echo ${i} couldn’t follow its own path home.`};
+function tick(){
+  const ci=runSelves.length-1,n=sim.tick,cur=runSelves[ci];
+  cur.inputs[n]=input();
+  E.step(lv,sim,runSelves);
+  const e=sim.ents[ci];cur.rec[n+1]={x:e.x,y:e.y};
+  frames.push(snap());
+  sim.ents.forEach((en,i)=>{if(en.div&&!en.told){en.told=true;toast(`Paradox: ${WHY[en.why](i+1)} Everyone after it now exists in only half of history.`,true);}});
+  if(onTile(e,lv.portal)){
+    cur.end=n;selves.push(cur);
+    toast(`Sent back ${fmt(n/TPS)} to 0:00. Echo ${selves.length} will replay that run, and remember what it saw.`);
+    startRewind(newRun);return true;}
+  if(onTile(e,lv.exit)){
+    const ex=existence(ci,sim.ents),stranded=ex>=1?E.strandedAfterExit(lv,sim,runSelves,ci):null;
+    if(ex>=1&&!stranded){win();return true;}
+    if(performance.now()-exitToastAt>2500){exitToastAt=performance.now();
+      toast(stranded
+        ?`The exit won’t open: after you leave, at ${fmt(stranded.tick/TPS)}, ${WHY[stranded.why](stranded.echo)} Press R to redo this run.`
+        :`You reached the exit in only ${Math.round(ex*100)}% of histories. Press R to redo this run.`,true);}
+  }
+  if(sim.tick>=lv.T*TPS){toast(`The loop closed at ${fmt(lv.T)}. This run is erased, but your echoes remain.`,true);startRewind(newRun);return true;}
+  return false;
+}
+function startRewind(cb){
+  if(frames.length<2){cb();return;}
+  mode='rewind';rewind={t:0,dur:Math.min(1.2,.4+frames.length/TPS*.05),cb};
+}
+function win(){
+  mode='won';
+  const last=li===LEVELS.length-1;
+  $('winTitle').textContent=last?'EVERY MEMORY KEPT':'TIMELINE CONSISTENT';
+  $('winText').textContent=`Escaped at ${fmt(sim.tick/TPS)} with ${runSelves.length} self${runSelves.length>1?'s':''} in play. Every past self saw exactly what it remembers.`+(last?' That’s every level in this test bed.':'');
+  $('nextBtn').hidden=last;
+  $('win').hidden=false;
+}
+function restartRun(){if(mode==='rewind')return;$('win').hidden=true;startRewind(newRun);}
+function undoEcho(){if(mode==='rewind')return;$('win').hidden=true;
+  if(selves.length){selves.pop();toast(`Echo ${selves.length+1} erased.`);}newRun();}
+function fmt(s){const m=Math.floor(s/60);return `${m}:${(s-m*60).toFixed(1).padStart(4,'0')}`;}
+
+/* ---------- DOM ---------- */
+function $(id){return document.getElementById(id);}
+const field=$('field'),fctx=field.getContext('2d'),tl=$('tl'),tctx=tl.getContext('2d');
+let DPR=1,cssW=600,cssH=300,TS=20,tlW=600;
+const COL={};
+function readColors(){const cs=getComputedStyle(document.documentElement);
+  ['void','panel','floor','grid','wall','wallhi','glass','ink','muted','self','sight','photon','paradox','exit','figure'].forEach(k=>COL[k]=cs.getPropertyValue('--'+k).trim());
+  COL.p=cs.getPropertyValue('--link-p').trim();COL.q=cs.getPropertyValue('--link-q').trim();COL.r=cs.getPropertyValue('--link-r').trim();}
+function resize(){
+  if(!lv)return;DPR=Math.min(2,window.devicePixelRatio||1);
+  cssW=$('stage').clientWidth;TS=cssW/lv.W;cssH=TS*lv.H;
+  field.style.height=cssH+'px';field.width=Math.round(cssW*DPR);field.height=Math.round(cssH*DPR);
+  tlW=cssW;tl.width=Math.round(tlW*DPR);tl.height=Math.round(68*DPR);
+}
+let toastTimer;
+function toast(msg,warn){const t=$('toast');t.textContent=msg;t.classList.toggle('warn',!!warn);t.style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.opacity=0,4200);}
+
+LEVELS.forEach((L,i)=>{const b=document.createElement('button');b.textContent=`${i+1}. ${L.name}`;b.onclick=()=>loadLevel(i);$('levels').appendChild(b);});
+$('rBtn').onclick=restartRun;$('zBtn').onclick=undoEcho;$('resetBtn').onclick=()=>loadLevel(li);
+$('replayBtn').onclick=()=>loadLevel(li);$('nextBtn').onclick=()=>loadLevel(Math.min(li+1,LEVELS.length-1));
+function holdButton(id,set){const b=$(id);
+  b.addEventListener('pointerdown',()=>{set(true);b.classList.add('on');});
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{set(false);b.classList.remove('on');}));}
+holdButton('ffBtn',v=>ff=v);holdButton('sightBtn',v=>sight=v);
+
+const GAME_KEYS=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','Space'];
+addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  if(!['KeyR','KeyZ','KeyF'].includes(e.code))kick=true;
+  if(GAME_KEYS.includes(e.code)){keys[e.code]=true;e.preventDefault();if(e.code==='Space')sight=true;}
+  else if(e.code==='KeyF'){ff=true;$('ffBtn').classList.add('on');}
+  else if(e.code==='KeyR'&&!e.repeat)restartRun();
+  else if(e.code==='KeyZ'&&!e.repeat)undoEcho();
+});
+addEventListener('keyup',e=>{keys[e.code]=false;if(e.code==='KeyF'){ff=false;$('ffBtn').classList.remove('on');}if(e.code==='Space')sight=false;});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false;ff=false;sight=false;joy=null;});
+field.addEventListener('pointermove',e=>{
+  if(e.pointerType==='mouse'){const r=field.getBoundingClientRect();mouse={x:e.clientX-r.left,y:e.clientY-r.top};}
+  else if(joy){joy.dx=Math.max(-1,Math.min(1,(e.clientX-joy.ox)/28));joy.dy=Math.max(-1,Math.min(1,(e.clientY-joy.oy)/28));}
+});
+field.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')mouse=null;});
+field.addEventListener('pointerdown',e=>{kick=true;if(e.pointerType!=='mouse'){field.setPointerCapture(e.pointerId);joy={ox:e.clientX,oy:e.clientY,dx:0,dy:0};}});
+['pointerup','pointercancel'].forEach(ev=>field.addEventListener(ev,()=>{joy=null;}));
+addEventListener('resize',resize);
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- rendering ---------- */
+function rr(c,x,y,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);else c.rect(x,y,w,h);}
+function conePath(c,v,n){
+  const ts=TS,N=48;c.moveTo(v.x*ts,v.y*ts);
+  for(let k=0;k<=N;k++){const a=v.ang-FOV/2+FOV*k/N,d=E.rayLength(lv,sim,v.x,v.y,a,n);c.lineTo((v.x+Math.cos(a)*d)*ts,(v.y+Math.sin(a)*d)*ts);}
+  c.closePath();
+}
+function drawFigure(c,x,y,col,alpha,label,ring){
+  const ts=TS;c.globalAlpha=alpha;c.fillStyle=col;c.beginPath();c.arc(x*ts,y*ts,R*ts,0,7);c.fill();
+  if(ring){c.globalAlpha=1;c.strokeStyle=ring;c.lineWidth=2;c.stroke();}
+  c.globalAlpha=1;if(label){c.fillStyle=COL.void;c.fillText(label,x*ts,y*ts+1);}
+}
+function render(){
+  const c=fctx,ts=TS;c.setTransform(DPR,0,0,DPR,0,0);
+  let ents,tickD,ph;
+  if(mode==='rewind'){const p=Math.min(1,rewind.t/rewind.dur),ep=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+    const f=frames[Math.round((1-ep)*(frames.length-1))];ents=f.ents;tickD=f.tick;ph=f.ph;}
+  else{ents=sim.ents;tickD=sim.tick;ph=sim.ph;}
+  const now=performance.now()/1000,ci=runSelves.length-1,me=ents[ci],view={x:me.x,y:me.y,ang:mode==='ready'&&!driver?input().a:me.ang};
+  c.fillStyle=COL.floor;c.fillRect(0,0,cssW,cssH);
+  c.strokeStyle=COL.grid;c.lineWidth=1;c.beginPath();
+  for(let x=0;x<=lv.W;x++){c.moveTo(x*ts+.5,0);c.lineTo(x*ts+.5,cssH);}
+  for(let y=0;y<=lv.H;y++){c.moveTo(0,y*ts+.5);c.lineTo(cssW,y*ts+.5);}
+  c.stroke();
+  for(let y=0;y<lv.H;y++)for(let x=0;x<lv.W;x++){
+    if(lv.glass[y][x]){c.fillStyle=COL.glass;c.globalAlpha=.22;c.fillRect(x*ts,y*ts,ts,ts);c.globalAlpha=.7;c.strokeStyle=COL.glass;c.lineWidth=1;
+      c.beginPath();c.moveTo(x*ts+ts*.2,y*ts+ts*.8);c.lineTo(x*ts+ts*.5,y*ts+ts*.2);c.moveTo(x*ts+ts*.5,y*ts+ts*.8);c.lineTo(x*ts+ts*.8,y*ts+ts*.2);c.stroke();c.globalAlpha=1;}
+    else if(lv.grid[y][x]){c.fillStyle=COL.wall;c.fillRect(x*ts,y*ts,ts+.5,ts+.5);
+      if(y+1<lv.H&&!lv.grid[y+1][x]){c.fillStyle=COL.wallhi;c.fillRect(x*ts,(y+1)*ts-2,ts+.5,2);}}
+  }
+  const font=w=>`${w} ${Math.max(9,ts*.34)}px "IBM Plex Mono",monospace`;
+  c.textAlign='center';c.textBaseline='middle';c.font=font(500);
+  [[lv.spawn,'S'],[lv.arrival,'A']].forEach(([p,l])=>{if(!p)return;c.globalAlpha=.55;c.strokeStyle=COL.muted;c.setLineDash([3,3]);
+    c.beginPath();c.arc(p.x*ts,p.y*ts,ts*.38,0,7);c.stroke();c.setLineDash([]);c.fillStyle=COL.muted;c.fillText(l,p.x*ts,p.y*ts+1);c.globalAlpha=1;});
+  for(const [pl,t] of Object.entries(lv.plates)){
+    const on=tickD>0&&sim.hist[pl][tickD-1],col=COL[pl],i=ts*.16;
+    rr(c,t.x*ts+i,t.y*ts+i,ts-2*i,ts-2*i,3);c.globalAlpha=on?.9:.14;c.fillStyle=col;c.fill();c.globalAlpha=1;c.lineWidth=2;c.strokeStyle=col;c.stroke();}
+  for(const d of lv.doors){const open=doorOpen(lv,sim,d,tickD),col=COL[d.link],i=ts*.06,x=d.x*ts,y=d.y*ts;
+    if(!open){c.fillStyle=col;c.globalAlpha=.85;c.fillRect(x+i,y+i,ts-2*i,ts-2*i);c.globalAlpha=1;
+      c.save();c.beginPath();c.rect(x+i,y+i,ts-2*i,ts-2*i);c.clip();c.strokeStyle=COL.void;c.lineWidth=1.5;c.beginPath();
+      if(d.inv){for(let k=-ts;k<ts;k+=ts/4){c.moveTo(x+k,y+ts);c.lineTo(x+k+ts,y);}}
+      else{for(let k=1;k<4;k++){c.moveTo(x+k*ts/4,y);c.lineTo(x+k*ts/4,y+ts);}}
+      c.stroke();c.restore();}
+    else{c.strokeStyle=col;c.globalAlpha=.55;c.setLineDash(d.inv?[1,3]:[3,3]);c.lineWidth=1.5;c.strokeRect(x+i,y+i,ts-2*i,ts-2*i);c.setLineDash([]);c.globalAlpha=1;}}
+  {const p=lv.portal,cx=(p.x+.5)*ts,cy=(p.y+.5)*ts,rot=reduceMotion?0:now*2.2;
+    for(let k=0;k<3;k++){c.strokeStyle=k===1?COL.photon:COL.self;c.lineWidth=2;c.beginPath();c.arc(cx,cy,ts*(.16+k*.11),rot*(k%2?-1:1)+k,rot*(k%2?-1:1)+k+4.2);c.stroke();}}
+  {const p=lv.exit,cx=(p.x+.5)*ts,cy=(p.y+.5)*ts,s=ts*.34;c.fillStyle=COL.exit;c.globalAlpha=.9;c.beginPath();c.moveTo(cx,cy-s);c.lineTo(cx+s,cy);c.lineTo(cx,cy+s);c.lineTo(cx-s,cy);c.closePath();c.fill();c.globalAlpha=1;}
+  for(const pl in sim.events){const src=lv.plates[pl];const max=lv.ringMax[pl]||3;
+    for(const ev of sim.events[pl]){if(ev.tick>tickD)continue;const r=(tickD-ev.tick)/TPS*E.C;if(r>max)continue;
+      c.strokeStyle=COL[pl];c.globalAlpha=.6*(1-r/max*.75);c.lineWidth=ev.on?2:1.5;c.setLineDash(ev.on?[]:[5,5]);
+      c.beginPath();c.arc((src.x+.5)*ts,(src.y+.5)*ts,Math.max(.1,r*ts),0,7);c.stroke();}}
+  c.setLineDash([]);c.globalAlpha=1;
+
+  // Your own sight: everything outside your cone is in shadow, and no one there can be seen.
+  c.save();c.beginPath();c.rect(0,0,cssW,cssH);conePath(c,view,tickD);c.arc(view.x*ts,view.y*ts,R*ts*1.8,0,7);
+  c.fillStyle=COL.void;c.globalAlpha=sight?.45:.62;c.fill('evenodd');c.restore();c.globalAlpha=1;
+  const iSee=t=>sight||E.canSee(lv,sim,view,t,tickD);
+
+  // Echo cones (for echoes you can see, or all of them under Echo Sight)
+  ents.forEach((e,i)=>{if(i===ci||e.gone||!iSee(e))return;const spotted=sim.ents[i].sees.includes(ci)&&!e.div;
+    c.beginPath();conePath(c,e,tickD);c.fillStyle=spotted?COL.paradox:COL.sight;c.globalAlpha=spotted?.2:.1;c.fill();
+    c.strokeStyle=spotted?COL.paradox:COL.sight;c.globalAlpha=.35;c.lineWidth=1;c.stroke();c.globalAlpha=1;});
+
+  // Remembered figures: where each past self saw someone at this moment. Hollow ones are missing.
+  c.font=font(600);
+  for(let i=0;i<ci;i++){const s=runSelves[i],e=sim.ents[i];if(e.gone||e.div||!s.mem[tickD-1])continue;
+    const present=new Set(e.sees.map(j=>{const f=j===-1?sim.ph:sim.ents[j];return f?Math.floor(f.x)+','+Math.floor(f.y):'';}));
+    for(const k of s.mem[tickD-1].split(';')){if(!k)continue;const [x,y]=k.split(',').map(Number),miss=!present.has(k);
+      if(!miss&&!sight)continue;
+      c.strokeStyle=COL.sight;c.globalAlpha=miss?.6+.4*Math.sin(now*8):.4;c.setLineDash([3,3]);c.lineWidth=2;
+      c.beginPath();c.arc((x+.5)*ts,(y+.5)*ts,ts*.42,0,7);c.stroke();c.setLineDash([]);
+      if(miss){c.fillStyle=COL.sight;c.fillText('!',(x+.5)*ts,(y+.5)*ts+1);}c.globalAlpha=1;}}
+
+  // The figure: real on the first run; on later runs, a guide outline along its path.
+  if(ph&&iSee(ph))drawFigure(c,ph.x,ph.y,COL.figure,.95,'?');
+  if(!sim.phantomOn&&lv.phantom){const g=E.phantomAt(lv,tickD);
+    c.fillStyle=COL.figure;c.globalAlpha=.25;for(let t=tickD;t<=lv.phantom[lv.phantom.length-1].t;t+=8){const p=E.phantomAt(lv,t);if(p){c.beginPath();c.arc(p.x*ts,p.y*ts,1.6,0,7);c.fill();}}
+    if(g){c.globalAlpha=.6;c.strokeStyle=COL.figure;c.setLineDash([2,3]);c.lineWidth=1.5;c.beginPath();c.arc(g.x*ts,g.y*ts,R*ts,0,7);c.stroke();c.setLineDash([]);}
+    c.globalAlpha=1;}
+
+  // Selves
+  ents.forEach((e,i)=>{
+    if(e.gone)return;const isCur=i===ci,ex=existence(i,ents),s=runSelves[i];
+    if(!isCur&&!iSee(e))return;
+    const flick=.35+.65*(reduceMotion?.6:(.5+.5*Math.sin(now*11+i)));
+    let col=COL.self,a=isCur?1:.6;if(e.div){col=COL.paradox;a=.85*flick;}else if(ex<1)a*=flick;
+    drawFigure(c,e.x,e.y,col,a,isCur?'':String(i+1),isCur?COL.ink:null);
+    c.strokeStyle=isCur?COL.ink:col;c.globalAlpha=isCur?.9:.6;c.lineWidth=2;c.beginPath();
+    c.moveTo((e.x+Math.cos(e.ang)*R*.4)*ts,(e.y+Math.sin(e.ang)*R*.4)*ts);c.lineTo((e.x+Math.cos(e.ang)*R*1.6)*ts,(e.y+Math.sin(e.ang)*R*1.6)*ts);c.stroke();c.globalAlpha=1;
+    const live=sim.ents[i];
+    if(!isCur&&!live.div&&live.mis>0&&live.why==='seen'){const f=Math.min(1,live.mis/E.SEEN_GRACE);
+      c.strokeStyle=COL.paradox;c.lineWidth=3;c.beginPath();c.arc(e.x*ts,e.y*ts,R*ts+5,-Math.PI/2,-Math.PI/2+f*2*Math.PI);c.stroke();}
+    if(ex<1){c.fillStyle=COL.paradox;c.fillText(Math.round(ex*100)+'%',e.x*ts,e.y*ts-R*ts-ts*.32);}
+  });
+
+  if(mode==='ready'){c.fillStyle=COL.void;c.globalAlpha=.6;c.fillRect(0,cssH/2-ts*.8,cssW,ts*1.6);c.globalAlpha=1;
+    c.fillStyle=COL.ink;c.font=`500 ${Math.max(11,ts*.42)}px "IBM Plex Mono",monospace`;
+    c.fillText(runSelves.length>1?`Run ${runSelves.length}: ${runSelves.length-1} echo${runSelves.length>2?'es':''} waiting. Press any key or click to start.`:'Press any key or click to start the clock',cssW/2,cssH/2);}
+  if(mode==='rewind'){c.fillStyle=COL.self;c.globalAlpha=.08;c.fillRect(0,0,cssW,cssH);c.globalAlpha=1;
+    c.fillStyle=COL.self;c.font=`500 ${Math.max(11,ts*.5)}px "IBM Plex Mono",monospace`;c.fillText('◀◀  rewinding to 0:00',cssW/2,ts*.6);}
+  renderTL(tickD,ents);
+  $('sClock').textContent=`${fmt(tickD/TPS)} / ${fmt(lv.T)}`;
+  $('sSelves').textContent=`${runSelves.length} (you + ${runSelves.length-1} echo${runSelves.length===2?'':'es'})`;
+  const ex=existence(ci,ents),se=$('sExist');se.textContent=Math.round(ex*100)+'%';se.className=ex<1?'bad':'ok';
+  const watchers=sim.ents.map((e,i)=>i<ci&&!e.div&&!e.gone&&e.sees.includes(ci)?i+1:0).filter(Boolean),sw=$('sSeen');
+  sw.textContent=watchers.length?'echo '+watchers.join(', '):'nobody';sw.className=watchers.length?'bad':'ok';
+}
+function renderTL(tickD,ents){
+  const c=tctx,w=tlW;c.setTransform(DPR,0,0,DPR,0,0);
+  c.fillStyle=COL.panel;c.fillRect(0,0,w,68);
+  const x0=16,x1=w-16,T=lv.T*TPS,X=t=>x0+(x1-x0)*Math.max(0,Math.min(1,t/T));
+  c.fillStyle=COL.grid;c.fillRect(x0,22,x1-x0,6);
+  c.fillStyle=COL.self;c.globalAlpha=.4;c.fillRect(x0,22,X(tickD)-x0,6);c.globalAlpha=1;
+  c.font='500 10px "IBM Plex Mono",monospace';c.textAlign='center';c.textBaseline='middle';
+  for(let s=0;s<=lv.T;s++){const x=X(s*TPS);c.fillStyle=COL.muted;c.fillRect(Math.round(x),30,1,s%5?3:6);if(s%5===0&&(x1-x0)>260)c.fillText(s+'s',x,43);}
+  let row=0;
+  for(const pl in lv.plates){const h=sim.hist[pl],end=Math.min(tickD,h.length);let st=-1;c.fillStyle=COL[pl];c.globalAlpha=.8;
+    for(let t=0;t<=end;t++){const on=t<end&&h[t];if(on&&st<0)st=t;if(!on&&st>=0){c.fillRect(X(st),52+row*5,Math.max(1.5,X(t)-X(st)),3);st=-1;}}
+    c.globalAlpha=1;row++;}
+  const ci=runSelves.length-1;
+  for(let i=0;i<ci;i++){const s=runSelves[i];
+    // when this past self saw someone (amber): those are the moments a figure must be there
+    c.fillStyle=COL.sight;c.globalAlpha=.55;let st=-1;
+    for(let t=0;t<=s.end+1;t++){const on=t<=s.end&&!!s.mem[t];if(on&&st<0)st=t;if(!on&&st>=0){c.fillRect(X(st),23,Math.max(1.5,X(t)-X(st)),4);st=-1;}}
+    c.globalAlpha=1;
+    const x=X(s.end),div=ents[i].div,col=div?COL.paradox:COL.self;
+    c.fillStyle=col;c.beginPath();c.moveTo(x,9);c.lineTo(x+5,14);c.lineTo(x,19);c.lineTo(x-5,14);c.closePath();c.fill();
+    c.textAlign='left';c.fillText(String(i+1),x+7,14);c.textAlign='center';
+    const dt=sim.ents[i].divTick;if(div&&dt>=0){c.fillStyle=COL.paradox;c.fillRect(X(dt)-1,20,2,10);}}
+  c.fillStyle=COL.photon;c.fillRect(X(tickD)-1,18,2,16);
+}
+
+/* ---------- loop ---------- */
+let last=performance.now(),acc=0;
+function frame(now){
+  const dt=Math.min(.1,(now-last)/1000);last=now;
+  if(mode==='ready'&&(kick||driver||input().c!==4))mode='run';
+  if(mode==='run'){acc+=dt*TPS*(ff?4:1)*speed;let guard=0;while(acc>=1&&guard++<400){acc-=1;if(tick()){acc=0;break;}}}else acc=0;
+  if(mode==='rewind'){rewind.t+=dt*Math.max(speed,1);if(rewind.t>=rewind.dur){const cb=rewind.cb;rewind=null;cb();}}
+  render();requestAnimationFrame(frame);
+}
+// Hook for scripted play (tests/screenshot.cjs): drive input, change speed, show Echo Sight, read the clock.
+window.EchoSight={loadLevel,
+  setDriver(fn){driver=fn;},setSpeed(s){speed=s;},setSight(v){sight=v;},
+  status(){return{level:li,run:runSelves.length,tick:sim.tick,mode};}};
+function start(data){readColors();loadLevel(Math.min(LEVELS.length-1,(data&&data.li)||0));requestAnimationFrame(frame);}
+try{window.claude?.hot?.snapshot?.(()=>({li}));}catch(e){}
+if(window.claude?.hot?.ready)window.claude.hot.ready(start);else start(window.claude?.hot?.data??{});
+})();
+</script>
+</body>
+</html>
