@@ -10,7 +10,7 @@ Where we left off, and what to pick up next. See [DESIGN.md](DESIGN.md) for the 
 - **GitHub Pages is live:** https://krishnashub.github.io/causal-games/ (landing page, both games).
 - **Agreed on 2026-10-14:** first person; paper-craft art; instant signals and sight; a shared personal time budget across all selves (proper time, start at 60 s); at most four selves; wrist band, footsteps, warning meter, ghost outlines. Details in DESIGN.md, "The game".
 
-## Next session (2026-10-15): three things to settle
+## Next session (2026-10-15): settle the design, then a quick proof of concept
 
 ### A. Unreal 5 vs Godot 4
 Decide the engine, or decide exactly what the prototype must show to decide it.
@@ -39,6 +39,11 @@ The user's idea. The game starts with just you. At some point you see yourself, 
 - Must settle: run-1 sightings can't come from the player (no recording exists), so levels author them. What's emergent is whether you *see* them. Twist to test: **what you didn't see, you don't owe.** Levels scatter possible future-selves; looking costs you obligations, looking away avoids them. Be honest in-game that "unobserved, so not owed" is a game rule (consistency is checked against what selves saw), not real physics.
 - Must settle: on a break, reset the whole level, or only the current run (keeping earlier echoes, like R today)? Current rules use Deutsch's 50% instead of a reset; pick one.
 - Must settle: seeing a *past* self (an echo) stays safe and owes nothing. Only sightings of future selves count.
+
+**Claude's take (agreed direction):** build the game around this mechanic. Strengths: a goal the player feels ("I saw myself, so I must go and be that person"), a memorable opening (alone, then you see yourself across the room), a legible debt counter that helps fairness in first person, honest physics (a Novikov loop), and one rule pulling both ways (be seen exactly where you were seen, and nowhere else). Risks: feeling scripted (fix with player choice: whether to look, which sightings to take on, how to repay), repetition over many levels (vary the sightings: running, hiding, looking right at you, only heard), and repaying needing frame-perfect copying (ghost outlines, generous matching).
+
+### B3. Then a quick proof of concept
+- [ ] Discuss the options for A, B and B2, pick one design, and prototype it in the browser: one level, the opening sighting, the debt counter, repaying it on run 2. Small enough to finish in one session.
 
 ### C. Research: games that already do this
 - [ ] Survey games with recorded past selves, time loops, or stealth against copies of yourself. Starting list to check: The Talos Principle (recorder puzzles), Braid, The Sexy Brutale, Outer Wilds, Deathloop, 12 Minutes, Timelie, Echo (Ultra Ultra, 2017), Quantum League, Retro/Grade, P.B. Winterbottom, Cursor\*10, The Swapper, A Slower Speed of Light (MIT).
