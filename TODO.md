@@ -30,6 +30,16 @@ Goal: meaningful, works, doesn't break real physics, and is a fun gimmick. Work 
 - [ ] How the time budget shows on the band (a draining gauge of personal time).
 - [ ] Write the result into DESIGN.md, "Player tools".
 
+### B2. Idea to evaluate: "Oops, I saw myself" as the reason to loop (2026-10-14, late)
+The user's idea. The game starts with just you. At some point you see yourself, by accident or because you need to (someone holds a door for you). Each sighting raises a counter: a debt. Before the loop ends (60–100 s), you must go back through the portal and *be* that self, so your past self saw what it saw. Miss it and the timeline breaks and resets.
+- Generalises the scripted figure and the open question "self-made prophecies": the figure is visibly you, and it is the reason for every echo.
+- Counter = outstanding sightings = selves you still owe. Number of sightings sets the number of runs. Fits the shared time budget and the cap of four.
+- The "?" card on the wrist band becomes the debt itself: one static card per unpaid sighting, clearing when the loop is closed. Links straight into B.
+- Physics: a self-consistent causal loop (Novikov). Who held the door first? Nobody; it's a bootstrap loop, which general relativity allows.
+- Must settle: run-1 sightings can't come from the player (no recording exists), so levels author them. What's emergent is whether you *see* them. Twist to test: **what you didn't see, you don't owe.** Levels scatter possible future-selves; looking costs you obligations, looking away avoids them. Be honest in-game that "unobserved, so not owed" is a game rule (consistency is checked against what selves saw), not real physics.
+- Must settle: on a break, reset the whole level, or only the current run (keeping earlier echoes, like R today)? Current rules use Deutsch's 50% instead of a reset; pick one.
+- Must settle: seeing a *past* self (an echo) stays safe and owes nothing. Only sightings of future selves count.
+
 ### C. Research: games that already do this
 - [ ] Survey games with recorded past selves, time loops, or stealth against copies of yourself. Starting list to check: The Talos Principle (recorder puzzles), Braid, The Sexy Brutale, Outer Wilds, Deathloop, 12 Minutes, Timelie, Echo (Ultra Ultra, 2017), Quantum League, Retro/Grade, P.B. Winterbottom, Cursor\*10, The Swapper, A Slower Speed of Light (MIT).
 - [ ] For each: perspective, how past selves work, whether being seen by yourself matters, how paradoxes are handled, how it sold.
