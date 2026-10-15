@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Causal Games</title>
+<meta name="description" content="Small browser games about time travel, causality and paradoxes, grounded in real physics.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Landing page for the games. Same deep-space palette as the games themselves. */
+:root{
+  --void:#090b17; --panel:#10132a; --grid:#1d2247; --wall:#2b3166;
+  --ink:#e7e9f6; --muted:#8a90b8;
+  --self:#7fd6ff; --photon:#f2c14e;
+  --display:'Michroma','Eurostile','Bank Gothic',system-ui,sans-serif;
+  --body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--void);color:var(--ink)}
+body{margin:0;font-family:var(--body);font-size:16px;line-height:1.55;padding-block:48px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1000px;margin:0 auto;display:grid;gap:36px}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(24px,4.4vw,40px);letter-spacing:.08em;margin:0}
+.lede{color:var(--muted);max-width:60ch;margin:12px 0 0}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px}
+.game{display:grid;grid-template-rows:auto 1fr;border:1px solid var(--grid);border-radius:6px;background:var(--panel);overflow:hidden;color:inherit;text-decoration:none;transition:border-color .2s}
+.game:hover,.game:focus-visible{border-color:var(--photon)}
+.game:focus-visible{outline:2px solid var(--photon);outline-offset:2px}
+.game img{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:cover;object-position:top left;border-bottom:1px solid var(--grid)}
+.body{padding:18px;display:grid;gap:8px;align-content:start}
+.tag{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h2{font-family:var(--display);font-weight:400;font-size:18px;letter-spacing:.06em;margin:0}
+.body p{margin:0;color:var(--muted);font-size:15px}
+.play{font-family:var(--mono);font-size:13px;color:var(--photon);margin-top:4px}
+footer{font-family:var(--mono);font-size:12.5px;color:var(--muted);border-top:1px solid var(--grid);padding-top:18px}
+footer a{color:var(--self)}
+@media (prefers-reduced-motion:reduce){.game{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>CAUSAL GAMES</h1>
+    <p class="lede">Small browser games about time travel, causality and paradoxes, grounded in real physics: light cones, closed timelike curves, Novikov self-consistency and Deutsch's answer to the grandfather paradox.</p>
+  </header>
+
+  <main class="games">
+    <a class="game" href="causal-diamond/">
+      <img src="causal-diamond/screenshots/lockstep-causal-diamond.png" alt="Causal Diamond: two echoes hold the gold and purple plates so both doors are open at once" width="1280" height="800">
+      <div class="body">
+        <div class="tag">Puzzle &middot; 7 levels</div>
+        <h2>Causal Diamond</h2>
+        <p>Team up with your past selves, beat light-speed signals, and keep the timeline consistent. A paradox doesn't end the game. It splits you into a 50/50 superposition.</p>
+        <div class="play">Play &rarr;</div>
+      </div>
+    </a>
+    <a class="game" href="echo-sight/">
+      <img src="echo-sight/screenshots/two-watchers-sneaking.png" alt="Echo Sight: you slip between the view cones of two past selves" width="1280" height="800" loading="lazy">
+      <div class="body">
+        <div class="tag">Stealth &middot; 4 levels &middot; early test bed</div>
+        <h2>Echo Sight</h2>
+        <p>Stealth against yourself. Every past self must see exactly what it remembers seeing: never be seen where it saw no one, and be wherever it saw someone. Best with a mouse.</p>
+        <div class="play">Play &rarr;</div>
+      </div>
+    </a>
+  </main>
+
+  <footer>Single-file HTML prototypes, no install. Source on <a href="https://github.com/krishnasHub/causal-games">GitHub</a>.</footer>
+</div>
+</body>
+</html>

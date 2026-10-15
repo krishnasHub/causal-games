@@ -2,6 +2,8 @@
 
 Small games and simulations about time travel, causality and paradoxes, built on real physics ideas: light cones, closed timelike curves, Novikov self-consistency and Deutsch's quantum resolution of the grandfather paradox.
 
+**Play online:** https://krishnashub.github.io/causal-games/
+
 ## Games
 
 | Game | Description |
@@ -11,6 +13,6 @@ Small games and simulations about time travel, causality and paradoxes, built on
 
 ![Causal Diamond](causal-diamond/screenshots/lockstep-causal-diamond.png)
 
-Each game lives in its own folder and runs from a single HTML file with no build step.
+Each game lives in its own folder and runs from a single HTML file with no build step. The root `index.html` is the landing page that GitHub Pages serves.
 
 [DESIGN.md](DESIGN.md) has the design for the first-person version, and [TODO.md](TODO.md) lists what's next.

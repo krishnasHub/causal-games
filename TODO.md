@@ -39,5 +39,5 @@ How: open `echo-sight/index.html` in Chrome or Edge (double-click it, or run `st
 - [ ] Port level 1 (Blind Spot) as the first first-person test.
 
 ### Small leftovers
-- [ ] Optional: GitHub Pages for both games (Settings → Pages → deploy from `main`).
+- [x] GitHub Pages: landing page at the repo root, served from `main` at https://krishnashub.github.io/causal-games/.
 - [ ] Optional: a browser `tests.html` so level checks don't need Node.
