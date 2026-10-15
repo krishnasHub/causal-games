@@ -7,10 +7,37 @@ Where we left off, and what to pick up next. See [DESIGN.md](DESIGN.md) for the 
 - **Causal Diamond** (`causal-diamond/`): seven levels, all verified by `node causal-diamond/tests/verify-levels.js`. Done for now.
 - **Echo Sight** (`echo-sight/`): 2D test bed for stealth against yourself. Four levels, all verified by `node echo-sight/tests/verify-levels.js`. **Nobody has played it by hand yet.**
 - **The full game** is now planned as first person in a paper-craft world, for Steam (see DESIGN.md). Engine deferred until a browser prototype proves it's fun. Nothing built yet.
+- **GitHub Pages is live:** https://krishnashub.github.io/causal-games/ (landing page, both games).
+- **Agreed on 2026-10-14:** first person; paper-craft art; instant signals and sight; a shared personal time budget across all selves (proper time, start at 60 s); at most four selves; wrist band, footsteps, warning meter, ghost outlines. Details in DESIGN.md, "The game".
 
-## Next session
+## Next session (2026-10-15): three things to settle
 
-### 0. First-person browser prototype
+### A. Unreal 5 vs Godot 4
+Decide the engine, or decide exactly what the prototype must show to decide it.
+- [ ] Compare for *this* game: first person, paper-craft look (flat sheets, boxes, painted textures), 2–4 recorded selves, live wrist views (one extra camera render per echo), 3D footsteps, Steam and Steam Deck.
+- [ ] How much Claude can build in each. Godot: scenes and scripts are text. Unreal: C++ is fine, but assets and Blueprints are binary, so levels would be spawned in C++ from text maps.
+- [ ] Cost of rendering 3–4 extra live views (render targets / SubViewports) in each.
+- [ ] Licensing and Steam: Unreal's 5% royalty over $1M; Godot is MIT with no royalty; GodotSteam vs Unreal's Steam subsystem.
+- [ ] Write the decision and reasons into DESIGN.md, "Engine".
+
+### B. The wrist band, nailed down
+Goal: meaningful, works, doesn't break real physics, and is a fun gimmick. Work through the door-holding example (level 2, The Figure) step by step, run by run.
+- [ ] What does the band show on run 1, when there are no past selves but the figure is holding the door?
+- [ ] What exactly triggers the "?" card and the static? Proposal to test: the band only shows **recordings it carried back through the portal** (your own past views). A future self has no recording yet, so its slot is static. The band can notice a future self only through *local* evidence (it sees another band with your ID), so no information travels back in time except what you physically carried through the portal.
+- [ ] On run 2, when you become the figure: does Echo 1's view on your band show you holding the door? (It should: that's the prophecy being kept.)
+- [ ] Can the static be a clue rather than a gimmick? E.g. it clears or sharpens as you get closer to matching what your past self saw.
+- [ ] Rules for raising the band: how much view it blocks, how much it slows you, whether views are live or scrubbable.
+- [ ] How the time budget shows on the band (a draining gauge of personal time).
+- [ ] Write the result into DESIGN.md, "Player tools".
+
+### C. Research: games that already do this
+- [ ] Survey games with recorded past selves, time loops, or stealth against copies of yourself. Starting list to check: The Talos Principle (recorder puzzles), Braid, The Sexy Brutale, Outer Wilds, Deathloop, 12 Minutes, Timelie, Echo (Ultra Ultra, 2017), Quantum League, Retro/Grade, P.B. Winterbottom, Cursor\*10, The Swapper, A Slower Speed of Light (MIT).
+- [ ] For each: perspective, how past selves work, whether being seen by yourself matters, how paradoxes are handled, how it sold.
+- [ ] Answer: has anyone done first-person "stealth against your former self" with memory obligations? What's actually new here?
+- [ ] Save as `RESEARCH.md`, with sources.
+
+## After that, in order
+### 0. First-person browser prototype (after A–C)
 Built on the Echo Sight simulation with three.js, as `echo-sight-fp/` (or similar). Rules and tools are in DESIGN.md under "The game".
 - [ ] Engine option for instant signals and sight (the HTML test bed keeps its slowed light until we decide).
 - [ ] First-person view: pointer-lock mouse look, WASD, paper-craft textures drawn in code, paper-doll echoes.
@@ -19,7 +46,7 @@ Built on the Echo Sight simulation with three.js, as `echo-sight-fp/` (or simila
 - [ ] Personal time budget (start at 60 s) shown on the wrist.
 - [ ] The four levels carry over, and the verifier still passes.
 
-### 1. Playtest Echo Sight by hand (first)
+### 1. Playtest Echo Sight by hand
 How: open `echo-sight/index.html` in Chrome or Edge (double-click it, or run `start echo-sight\index.html` from the repo folder). Play with a mouse. Jot notes in `PLAYTEST.md` at the repo root as you go: level, run, what happened, how it felt. If you're stuck, the reference solutions are in `echo-sight/tests/solutions.js` (spoilers).
 - [ ] Play all four levels with mouse and keyboard. Note where it feels unfair, confusing or too easy.
 - [ ] Tune the feel: view cone (90°, 9 tiles), spotted grace (0.13 s), prophecy grace (0.25 s), walk speed.
