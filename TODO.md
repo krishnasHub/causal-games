@@ -6,9 +6,18 @@ Where we left off, and what to pick up next. See [DESIGN.md](DESIGN.md) for the 
 
 - **Causal Diamond** (`causal-diamond/`): seven levels, all verified by `node causal-diamond/tests/verify-levels.js`. Done for now.
 - **Echo Sight** (`echo-sight/`): 2D test bed for stealth against yourself. Four levels, all verified by `node echo-sight/tests/verify-levels.js`. **Nobody has played it by hand yet.**
-- Unreal: design only (in DESIGN.md). Nothing built.
+- **The full game** is now planned as first person in a paper-craft world, for Steam (see DESIGN.md). Engine deferred until a browser prototype proves it's fun. Nothing built yet.
 
 ## Next session
+
+### 0. First-person browser prototype
+Built on the Echo Sight simulation with three.js, as `echo-sight-fp/` (or similar). Rules and tools are in DESIGN.md under "The game".
+- [ ] Engine option for instant signals and sight (the HTML test bed keeps its slowed light until we decide).
+- [ ] First-person view: pointer-lock mouse look, WASD, paper-craft textures drawn in code, paper-doll echoes.
+- [ ] Wrist band: live views through each past self's eyes, "?" card for future selves, raising it slows you.
+- [ ] Footsteps, warning meter, ghost outlines for prophecies.
+- [ ] Personal time budget (start at 60 s) shown on the wrist.
+- [ ] The four levels carry over, and the verifier still passes.
 
 ### 1. Playtest Echo Sight by hand (first)
 How: open `echo-sight/index.html` in Chrome or Edge (double-click it, or run `start echo-sight\index.html` from the repo folder). Play with a mouse. Jot notes in `PLAYTEST.md` at the repo root as you go: level, run, what happened, how it felt. If you're stuck, the reference solutions are in `echo-sight/tests/solutions.js` (spoilers).
@@ -31,12 +40,10 @@ How: open `echo-sight/index.html` in Chrome or Edge (double-click it, or run `st
 - [ ] A two-figure level: two prophecies, needing two later runs.
 - [ ] A level where you must deliberately be seen at a precise moment (the figure *is* the plan).
 
-### 4. Then Unreal (UE5)
-- [ ] Pick the UE version and set up a C++ project in `causal-games/unreal/` (or its own repo, since UE projects are large; decide).
-- [ ] Milestone 1, grey-box loop: `UTimeLoopSubsystem`, `UChronoRecorderComponent`, `AEcho` playback, portal and rewind, one plate and door.
-- [ ] Milestone 2, causality: light-speed signals, blocked-path sweep checks, existence post-process, exit look-ahead.
-- [ ] Milestone 3, sight: `UVisionComponent` (frustum and traces), memory recording and comparison, detection ring, Echo Sight overlay.
-- [ ] Port level 1 (Blind Spot) as the first first-person test.
+### 4. Then the engine
+- [ ] After the prototype playtest, pick Godot 4 (lead) or Unreal 5. See DESIGN.md, "Engine".
+- [ ] Grey-box: record and play back a self, portal, rewind, switch and door, sight checks. Levels loaded from text maps.
+- [ ] Port level 1 (Blind Spot) as the first test.
 
 ### Small leftovers
 - [x] GitHub Pages: landing page at the repo root, served from `main` at https://krishnashub.github.io/causal-games/.

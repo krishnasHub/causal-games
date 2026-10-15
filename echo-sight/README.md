@@ -22,7 +22,7 @@ Open `index.html` in a browser. It's a single file with no build step and no ins
 
 Paradoxes work as in [Causal Diamond](../causal-diamond/): every self after a broken one exists in only 50% of histories, and the exit only accepts 100%. When you reach the exit, the game plays out the rest of the loop without you. If any past self would still be spotted, miss a prophecy or get stranded, the exit stays shut.
 
-See [DESIGN.md](../DESIGN.md) for the full rules and the plan for the Unreal version.
+See [DESIGN.md](../DESIGN.md) for the full rules and the plan for the first-person game.
 
 ## Levels
 

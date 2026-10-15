@@ -1,10 +1,10 @@
 # Causal Games
 
-Time-travel games, prototyped as single-file HTML before a planned Unreal Engine 5 first-person version.
+Time-travel games, prototyped as single-file HTML before a first-person, paper-craft game for Steam.
 
-- Start each session from [TODO.md](TODO.md). [DESIGN.md](DESIGN.md) has the rules and the Unreal plan.
+- Start each session from [TODO.md](TODO.md). [DESIGN.md](DESIGN.md) has the rules and the plan for the full game.
 - Keep levels verified after any change: `node causal-diamond/tests/verify-levels.js` and `node echo-sight/tests/verify-levels.js`.
-- HTML first. Don't start the Unreal project until the user says so.
+- HTML first. Don't start an engine project (Godot or Unreal) until the user says so.
 
 ## Persona
 

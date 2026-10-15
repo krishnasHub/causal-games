@@ -61,47 +61,60 @@ Memory is stored as tiles, not identities. It doesn't matter *which* self fills 
 
 All four are checked by `echo-sight/tests/verify-levels.js`: each is winnable, can't be won solo, and the obvious mistake gets caught.
 
-## The 3D version (Unreal Engine 5)
+## The game: first person, in a paper-craft world
 
-### What carries over
-| 2D test bed | First person |
-|---|---|
-| View cones and fog | Your actual camera. Echoes are full-body characters you watch from behind pillars. |
-| Signal rings | A glowing sphere expanding through walls at *c* |
-| 50% existence | Double vision: the screen splits into two drifting versions of the world |
-| Echo Sight | Toggle a stealth-game "guard vision" overlay. Scrub the wrist timeline to see where any echo will be looking at any moment. |
-| The figure | A hooded silhouette on run 1. On later runs, a faint ghost outline where you must stand. |
-| Timeline strip | A wrist device: loop clock, portal times, outstanding prophecies |
+Decided on 2026-10-14. The goal is a standalone game on Steam. The physics should be as accurate as we can make it, with "stealth against your former self" as the twist.
+
+### Why first person
+You are the echo. On run N you remember your earlier runs from the inside, and the challenge is remembering where you were and avoiding yourself. A top-down view would show everything and turn memory into a planning board. Fairness comes from the tools below, not from an overhead camera.
+
+### Art: a paper-craft diorama
+A world made of craft materials, walked through in 3D: corrugated-card walls, crayon floors, masking-tape doors, a construction-paper portal. Geometry is boxes and flat sheets; textures are pixel art or painted paper, drawn in code.
+- **Echoes are paper cut-out dolls.** Turned side-on they become a thin sliver, so facing reads at a glance.
+- **View cones** (in Echo Sight) are translucent crayon scribbles on the floor.
+- **Physics notes** are handwritten scraps pinned to walls.
+
+### Rules that change from the test bed
+- **Signals are instant.** Standing on a switch opens its door at that moment. At real light speed a signal crosses a room in nanoseconds, so this is the accurate choice. (Causal Diamond keeps its slowed light as its own game.)
+- **Sight is instant**, for the same reason.
+- **Personal time budget.** Each level gives a fixed amount of time to *live* across all runs (start at 60 s, tune in playtests). A run spends the time from arrival to portal jump. This limits the number of echoes and rewards clean runs. Physically it is your **proper time**, shown as a draining gauge on the wrist. If full special relativity is ever added, moving fast would slow this clock (the twin paradox).
+- **At most four selves per level**, for readability.
+
+### Player tools
+- **Wrist band.** Raise your wrist to see a small live view through the eyes of every past self at this moment. Raising it blocks part of your view and slows you, so checking costs something. Future selves can't be shown: their slot is a "?" card. On run 1 that is the prophecy figure, someone you haven't become yet.
+- **Footsteps.** You hear your past selves walking, positioned in 3D.
+- **Warning meter.** Being in an echo's view fills a meter before you are spotted.
+- **Ghost outlines** mark where a prophecy needs you to stand.
+- **Echo Sight** (hold): every past self's cone, as crayon on the floor.
+
+### Physics we keep accurate
+- Closed timelike curves: the portal.
+- Novikov self-consistency: the exit only accepts a consistent timeline.
+- Deutsch's resolution: a paradox becomes a mix of histories (50% existence), not a contradiction.
+- Proper time: the personal time budget.
+
+### Engine
+Deferred until the first-person browser prototype shows the game is fun. Godot 4 is the lead: the paper-craft look doesn't need Unreal's realistic lighting or animated characters, and Godot's scenes and scripts are text files Claude can edit. Unreal 5 stays an option. Either way, levels are authored as text maps (as now) so the level verifier keeps working.
 
 ### Key technical decision: record transforms, not inputs
+Whatever the engine, echoes play back recorded transforms (position, view rotation, interactions, about 60 Hz) as kinematic playback, and paradoxes are checked explicitly:
+- **Spotted:** each tick, trace from the echo's recorded eye to a few points on each figure, inside its recorded view frustum. Compare with what it saw when recorded.
+- **Prophecy:** the same check in reverse: a remembered figure must still be traceable.
+- **Blocked:** sweep the echo's body along its next recorded segment. A closed door in the way strands it.
+- **Failed interaction:** at each recorded "pressed switch at 0:12.4", check the switch is still pressable.
 
-The 2D game replays inputs because its simulation is fully deterministic. Unreal's physics (Chaos) and animation aren't. So echoes play back **recorded transforms** (position, view rotation, animation state, interaction events at about 60 Hz) as kinematic playback, and paradoxes are checked explicitly:
-
-- **Spotted:** each tick, line-trace from the echo's recorded camera to a few points on each figure's body (head, chest, hands), inside its recorded view frustum. Compare against what it saw when it was recorded.
-- **Prophecy:** same check, in the other direction: a remembered figure must still be traceable.
-- **Blocked:** sweep the echo's capsule along its next recorded segment. A closed door in the way means it's stranded.
-- **Failed interaction:** at each recorded "pressed button B at 0:12.4", check the button is still there and pressable.
-
-### Systems
-- `UTimeLoopSubsystem` (world subsystem): loop clock, runs, rewind, consistency checks, exit look-ahead.
-- `UChronoRecorderComponent` (on the player): writes transform, view, animation state, interactions and seen-figures into a run buffer.
-- `AEcho`: skeletal mesh driven from a run buffer. A ghost material shifts red when it's spotting you or stranded.
-- `UVisionComponent`: frustum test plus traces, shared by echoes and the player's memory recording.
-- `UProphecy` / `APhantom`: level-authored first-run figure with a scripted path.
-- World state as a function of time: doors and plates compute their state from the event log ("plate pressed at 3.1 s, door 9 m away, so it opens at 3.1 + 9/c"). That makes rewind nearly free.
-- `ULightSignal`: expanding-sphere effect, and doors subscribe to the time it arrives.
-- Paradox post-process: one material driven by an `Existence` parameter (double image, chromatic split, audio detune).
+World state is a function of the event log, which makes rewind nearly free.
 
 ### Build plan
-1. Grey-box loop: record and play back a self, portal, rewind, plate and door.
-2. Causality: light-speed signals, blocked-path checks, existence, exit look-ahead.
-3. **Sight (the new genre):** view checks, memory recording, detection ring, Echo Sight.
-4. Prophecies: the first-run figure, ghost guides, wrist-device obligations.
-5. Vertical slice: port the test-bed levels, art pass, sound (reversed audio during rewind).
+1. **First-person browser prototype** (three.js) on the Echo Sight simulation: instant signals, paper textures, mouse look, wrist views, footsteps, warning meter, time budget. Same four levels and verifier.
+2. Playtest. If remembering your runs from the inside is fun, pick the engine.
+3. Engine grey-box: record and play back a self, portal, rewind, switch and door, sight checks.
+4. Prophecies, wrist band, sound, paper-craft art pass.
+5. Vertical slice of about ten levels, controller support, Steam Deck.
+6. Steam: store page early for wishlists, demo in a Next Fest.
 
 ### Risks
-- **Readability:** many copies of you in first person is a lot. Use per-echo colors and numbers, cap echoes per level, and make Echo Sight good.
-- **Fairness:** being spotted must feel earned. Use the detection ring, grace time, and clear view-cone telegraphing.
-- **Prophecy precision:** matching a remembered figure by hand needs slack. Keep figures mostly standing still, and use the ghost outline to guide.
-- **Motion sickness:** keep the rewind effect short, and offer a fade instead.
-- **Level validation:** port the autopilot verifier as an editor test, so every level is proven solvable.
+- **Fairness:** being spotted must feel earned. Few selves, short loops, the wrist band, footsteps and the warning meter carry this. The prototype has to prove it.
+- **Prophecy precision:** keep figures mostly still; ghost outlines guide.
+- **Motion sickness:** keep rewinds short, and offer a fade.
+- **Level validation:** port the autopilot verifier so every level is proven solvable.
