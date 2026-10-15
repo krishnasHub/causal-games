@@ -22,6 +22,7 @@ const SHOTS=[
     await page.evaluate(()=>document.fonts.ready.then(()=>0));
     await page.evaluate(s=>{
       const E=window.CDEngine,G=window.CausalDiamond,entry=window[s.source][s.index];
+      document.getElementById('intro').close();
       G.loadLevel(s.level);
       G.setDriver(window.CDAutopilot.makePilot(E,E.parseLevel(E.LEVELS[s.level]),entry.runs));
       G.setSpeed(3);

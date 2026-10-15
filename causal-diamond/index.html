@@ -59,6 +59,18 @@ kbd{font-family:var(--mono);font-size:11.5px;color:var(--ink);border:1px solid v
 .toast{position:absolute;left:12px;right:12px;top:12px;margin:0 auto;max-width:560px;font-family:var(--mono);font-size:12.5px;background:color-mix(in srgb,var(--void) 90%,transparent);border:1px solid var(--wall);border-radius:4px;padding:8px 12px;text-align:center;transition:opacity .3s;pointer-events:none}
 .toast.warn{border-color:var(--paradox);color:var(--paradox)}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.nav{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--wall);border-radius:6px;padding:24px;width:min(520px,calc(100vw - 32px));max-height:calc(100dvh - 32px);box-sizing:border-box}
+dialog::backdrop{background:color-mix(in srgb,var(--void) 82%,transparent)}
+dialog .card{max-width:none}
+.info{display:grid;gap:14px}
+.info h2{font-family:var(--display);font-weight:400;font-size:18px;letter-spacing:.06em;margin:0}
+.info ul{margin:0;padding:0;list-style:none;display:grid;gap:12px}
+.info li{color:var(--muted);font-size:14px}
+.info li b{color:var(--ink);font-weight:600}
+.info a{color:var(--self)}
+.info a:hover{color:var(--photon)}
+.info .row{justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -69,7 +81,10 @@ kbd{font-family:var(--mono);font-size:11.5px;color:var(--ink);border:1px solid v
       <h1>CAUSAL DIAMOND</h1>
       <div class="sub">a time-loop prototype &middot; walk 4 tiles/s &middot; light (c) 6 tiles/s</div>
     </div>
-    <div class="levels" id="levels"></div>
+    <div class="nav">
+      <div class="levels" id="levels"></div>
+      <button id="infoBtn" aria-haspopup="dialog">Info</button>
+    </div>
   </header>
 
   <div class="main">
@@ -131,6 +146,29 @@ kbd{font-family:var(--mono);font-size:11.5px;color:var(--ink);border:1px solid v
     </aside>
   </div>
 </div>
+
+<dialog id="intro" aria-labelledby="introTitle">
+  <div class="card">
+    <h2 id="introTitle">CAUSAL DIAMOND</h2>
+    <p>A small puzzle game for playing with time travel, grounded in real physics. Nothing outruns light, and every past self you leave behind has to stay consistent with what you do next.</p>
+    <div class="row"><button class="primary" id="introBtn" autofocus>Continue</button></div>
+  </div>
+</dialog>
+
+<dialog id="info" aria-labelledby="infoTitle">
+  <div class="info">
+    <h2 id="infoTitle">THE PHYSICS</h2>
+    <ul>
+      <li><b>Light cones.</b> No cause travels faster than light, so an event can only affect what its light cone reaches. Plate signals here move at c, faster than you walk. <a href="https://en.wikipedia.org/wiki/Light_cone" target="_blank" rel="noopener">Wikipedia</a></li>
+      <li><b>Causal diamond.</b> The overlap of one event's future light cone and a later event's past light cone: everything the first can affect that can still affect the second. <a href="https://en.wikipedia.org/wiki/Causal_structure" target="_blank" rel="noopener">Wikipedia</a></li>
+      <li><b>Closed timelike curves.</b> Paths through spacetime that loop back into their own past, which general relativity allows in principle. The portal is one. <a href="https://en.wikipedia.org/wiki/Closed_timelike_curve" target="_blank" rel="noopener">Wikipedia</a></li>
+      <li><b>Novikov self-consistency.</b> The only histories that can happen are ones consistent with themselves. That's why the exit wants a timeline with no paradox in it. <a href="https://en.wikipedia.org/wiki/Novikov_self-consistency_principle" target="_blank" rel="noopener">Wikipedia</a></li>
+      <li><b>The grandfather paradox, and Deutsch.</b> David Deutsch showed that in quantum mechanics a paradox becomes a mix of histories, not a contradiction. That's the 50% existence. <a href="https://en.wikipedia.org/wiki/Grandfather_paradox" target="_blank" rel="noopener">Wikipedia</a></li>
+      <li><b>Further reading.</b> Kip Thorne, <i>Black Holes and Time Warps</i>. J. Richard Gott, <i>Time Travel in Einstein's Universe</i>. David Deutsch, <i>The Fabric of Reality</i>.</li>
+    </ul>
+    <div class="row"><button id="infoClose" autofocus>Close</button></div>
+  </div>
+</dialog>
 
 <script id="engine">
 /* Engine: pure, deterministic simulation and level data. No DOM access, so tests/verify-levels.js can run it in Node. */
@@ -421,6 +459,9 @@ let toastTimer;
 function toast(msg,warn){const t=$('toast');t.textContent=msg;t.classList.toggle('warn',!!warn);t.style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.opacity=0,3800);}
 
 LEVELS.forEach((L,i)=>{const b=document.createElement('button');b.textContent=`${i+1}. ${L.name}`;b.onclick=()=>loadLevel(i);$('levels').appendChild(b);});
+$('introBtn').onclick=()=>$('intro').close();
+$('infoBtn').onclick=()=>$('info').showModal();$('infoClose').onclick=()=>$('info').close();
+$('info').addEventListener('click',e=>{const r=$('info').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('info').close();}); // click on the backdrop
 $('rBtn').onclick=restartRun;$('zBtn').onclick=undoEcho;$('resetBtn').onclick=()=>loadLevel(li);
 $('replayBtn').onclick=()=>loadLevel(li);$('nextBtn').onclick=()=>loadLevel(Math.min(li+1,LEVELS.length-1));
 const ffb=$('ffBtn');
@@ -429,7 +470,7 @@ ffb.addEventListener('pointerdown',()=>{ff=true;ffb.classList.add('on');});
 
 const GAME_KEYS=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyW','KeyA','KeyS','KeyD'];
 addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT')return;
+  if(e.target.tagName==='INPUT'||document.querySelector('dialog[open]'))return;
   if(GAME_KEYS.includes(e.code)){keys[e.code]=true;e.preventDefault();}
   else if(e.code==='KeyF'){ff=true;ffb.classList.add('on');}
   else if(e.code==='KeyR'&&!e.repeat)restartRun();
@@ -565,7 +606,7 @@ function frame(now){
 window.CausalDiamond={loadLevel,
   setDriver(fn){driver=fn;},setSpeed(s){speed=s;},
   status(){return{level:li,run:runSelves.length,tick:sim.tick,mode};}};
-function start(data){readColors();loadLevel(Math.min(LEVELS.length-1,(data&&data.li)||0));requestAnimationFrame(frame);}
+function start(data){readColors();if(!(data&&'li' in data))$('intro').showModal();loadLevel(Math.min(LEVELS.length-1,(data&&data.li)||0));requestAnimationFrame(frame);}
 try{window.claude?.hot?.snapshot?.(()=>({li}));}catch(e){}
 if(window.claude?.hot?.ready)window.claude.hot.ready(start);else start(window.claude?.hot?.data??{});
 })();

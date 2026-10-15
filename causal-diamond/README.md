@@ -10,6 +10,8 @@ A real-time time-loop puzzle prototype. Your past selves replay your earlier run
 
 Open `index.html` in a browser. It's a single file with no build step and no install. It loads its fonts from Google Fonts, and falls back to system fonts when offline.
 
+A welcome panel opens first. The **Info** button in the header explains the physics behind the game, with links for further reading.
+
 ## How it works
 
 - **Real-time loop.** Each level runs on a clock (20–30 seconds). The clock starts when you first move.
