@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Slice</title>
+<style>
+  :root { --paper:#f4efe3; --ink:#2b2a2e; --kraft:#b98d5e; --accent:#c4532f; }
+  html, body { margin:0; height:100%; background:var(--paper); color:var(--ink); font:14px/1.45 Georgia, "Times New Roman", serif; overflow:hidden; }
+  canvas#view { position:fixed; inset:0; width:100%; height:100%; display:block; cursor:grab; touch-action:none; }
+  canvas#view.drag { cursor:grabbing; }
+  .panel { position:fixed; left:16px; top:16px; width:310px; max-width:calc(100% - 32px); box-sizing:border-box;
+    background:rgba(250,246,236,.94); border:1.5px solid var(--ink); box-shadow:4px 4px 0 rgba(0,0,0,.16);
+    padding:12px 14px 10px; transform:rotate(-.4deg); }
+  .panel.hidden .body { display:none; }
+  h1 { font-size:20px; margin:0 0 4px; letter-spacing:.5px; display:flex; justify-content:space-between; align-items:center; }
+  h1 button { font:12px Georgia, serif; background:none; border:1px solid var(--ink); padding:1px 8px; cursor:pointer; color:var(--ink); }
+  p { margin:6px 0 10px; }
+  label { display:flex; align-items:center; gap:8px; margin:6px 0; }
+  label span { width:86px; flex:none; }
+  select, input[type=range] { flex:1; min-width:0; accent-color:var(--accent); }
+  select { font:13px Georgia, serif; background:#fffdf7; border:1px solid var(--ink); padding:2px; color:var(--ink); }
+  #strip { width:100%; height:86px; display:block; margin-top:8px; border-top:1px dashed #9a9488; }
+  #sense { font:bold 12px Georgia, serif; letter-spacing:1px; text-transform:uppercase; margin-top:4px; color:#6b665c; }
+  #sense.sees { color:var(--accent); }
+  #status { font-style:italic; min-height:2.9em; margin:4px 0 2px; }
+  .hint { font-size:12px; color:#6b665c; margin:4px 0 0; }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div class="panel" id="panel">
+  <h1>The Slice <button id="toggle">hide</button></h1>
+  <div class="body">
+    <p>A creature that lives in four dimensions: three of space and one more, <b>w</b>. Our world is the 3D slice at w&nbsp;=&nbsp;0, so we only ever see where its body crosses that slice. As it drifts and turns along w, it grows from nothing, changes shape, splits and vanishes, like the sphere visiting <i>Flatland</i> (Abbott, 1884).</p>
+    <label><span>Shape</span>
+      <select id="shape">
+        <option value="0">The creature</option>
+        <option value="1">Hypersphere</option>
+        <option value="2">Tesseract</option>
+        <option value="3">Ditorus</option>
+      </select></label>
+    <label><span>Look</span>
+      <select id="style">
+        <option value="0">Pencil sketch</option>
+        <option value="1">Layered paper</option>
+      </select></label>
+    <label><span>Position in w</span><input id="w" type="range" min="-2.4" max="2.4" step="0.01" value="0"></label>
+    <label><span>Drift in w</span><input id="drift" type="checkbox" checked style="flex:none"></label>
+    <label><span>4D tumble</span><input id="spin" type="range" min="0" max="3" step="0.01" value="1"></label>
+    <canvas id="strip"></canvas>
+    <div id="sense"></div>
+    <div id="status"></div>
+    <p class="hint">Drag to look around, scroll to zoom, Space to pause.</p>
+  </div>
+</div>
+
+<script id="frag" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+uniform vec2 uRes;
+uniform float uTime;   // animation clock (stops when paused)
+uniform float uW;      // the creature's position along w; our world is w = 0
+uniform mat4 uRot;     // the creature's 4D orientation
+uniform int uShape;
+uniform int uStyle;
+uniform vec3 uCam;
+uniform vec3 uTarget;
+uniform float uShift;  // moves the view right so the side panel doesn't cover the creature
+uniform vec3 uEyeA;    // 3D centres of the eyes' slices (from the same rotation, in JS)
+uniform vec3 uEyeB;
+out vec4 frag;
+
+const vec3 CENTER = vec3(0.0, 1.5, 0.0);
+const vec3 PAPER = vec3(0.965, 0.945, 0.89);
+const vec3 GRAPHITE = vec3(0.22, 0.22, 0.26);
+const vec3 L = normalize(vec3(-0.5, 0.9, 0.4));
+
+float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float noise(vec2 p) {
+  vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
+}
+float smin(float a, float b, float k) { float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0); return mix(b, a, h) - k * h * (1.0 - h); }
+float sdBox3(vec3 p, vec3 b) { vec3 d = abs(p) - b; return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0); }
+
+// 4D distance functions. Evaluated on our slice, a 4D distance is still a safe
+// lower bound on the 3D distance to the cross-section, so ray marching works.
+float sdTess(vec4 q, vec4 b, float r) { vec4 d = abs(q) - b; return length(max(d, 0.0)) + min(max(max(d.x, d.y), max(d.z, d.w)), 0.0) - r; }
+float sdDitorus(vec4 q, float R1, float R2, float r) {
+  float a = length(q.xz) - R1;
+  float b = length(vec2(a, q.y)) - R2;
+  return length(vec2(b, q.w)) - r;
+}
+
+float creature4(vec4 q) {
+  if (uShape == 1) return length(q) - 1.0;
+  if (uShape == 2) return sdTess(q, vec4(0.6), 0.04);
+  if (uShape == 3) return sdDitorus(q, 0.85, 0.4, 0.2);
+  // A rounded tesseract core with five hyperspherical limbs that orbit through w,
+  // so they surface and sink independently, and a thin ring of thread.
+  float d = sdTess(q, vec4(0.34), 0.14);
+  for (int i = 0; i < 5; i++) {
+    float fi = float(i);
+    float a = uTime * 0.5 + fi * 1.2566;
+    vec4 c = vec4(cos(a) * 0.8, 0.45 * sin(fi * 2.3 + uTime * 0.3), sin(a) * 0.55, 0.85 * sin(a * 1.3 + fi * 1.7));
+    d = smin(d, length(q - c) - 0.26, 0.28);
+  }
+  return min(d, sdDitorus(q, 1.1, 0.12, 0.06));
+}
+
+// Two eyes, set a little way along w from the body. They are only in our world
+// (and can only see us) when the tumble and drift bring them through w = 0.
+const vec4 EYE_A = vec4(-0.2, 0.18, 0.6, 0.5);
+const vec4 EYE_B = vec4(0.2, 0.18, 0.6, 0.5);
+const float EYE_R = 0.17;
+float eyes4(vec4 q) { return uShape == 0 ? min(length(q - EYE_A), length(q - EYE_B)) - EYE_R : 1e9; }
+
+// x: body, y: eyes
+vec2 creatureDist(vec3 p) { vec4 q = uRot * vec4(p - CENTER, -uW); return vec2(creature4(q), eyes4(q)); }
+
+// x: distance, y: material (1 creature, 2 floor sheet, 3 box, 4 eye), z: creature distance
+vec3 map(vec3 p) {
+  vec2 c = creatureDist(p);
+  float dc = min(c.x, c.y);
+  float df = sdBox3(p - vec3(0.0, -0.06, 0.0), vec3(4.5, 0.06, 4.5));
+  float db = sdBox3(p - vec3(2.3, 0.38, -1.4), vec3(0.38)) - 0.01;
+  vec3 r = vec3(c.x, 1.0, dc);
+  if (c.y < r.x) r.xy = vec2(c.y, 4.0);
+  if (df < r.x) r.xy = vec2(df, 2.0);
+  if (db < r.x) r.xy = vec2(db, 3.0);
+  return r;
+}
+
+vec3 normalAt(vec3 p) {
+  const vec2 k = vec2(1, -1); const float e = 0.0015;
+  return normalize(k.xyy * map(p + k.xyy * e).x + k.yyx * map(p + k.yyx * e).x +
+                   k.yxy * map(p + k.yxy * e).x + k.xxx * map(p + k.xxx * e).x);
+}
+
+float shadow(vec3 ro, vec3 rd) {
+  float res = 1.0, t = 0.03;
+  for (int i = 0; i < 48; i++) {
+    float h = map(ro + rd * t).x;
+    res = min(res, 10.0 * h / t);
+    if (res < 0.01) break;
+    t += clamp(h, 0.02, 0.4);
+    if (t > 12.0) break;
+  }
+  return clamp(res, 0.0, 1.0);
+}
+
+float lineMask(float c, float w) { return 1.0 - smoothstep(w, w + 0.12, abs(fract(c) - 0.5) * 2.0); }
+
+void main() {
+  vec2 fc = gl_FragCoord.xy;
+  vec2 uv = (fc - 0.5 * uRes) / uRes.y - vec2(uShift, 0.0);
+  vec3 fw = normalize(uTarget - uCam);
+  vec3 rt = normalize(cross(fw, vec3(0, 1, 0)));
+  vec3 up = cross(rt, fw);
+  vec3 rd = normalize(rt * uv.x + up * uv.y + fw * 1.6);
+  vec3 ro = uCam;
+
+  float boil = floor(uTime * 8.0);   // redraw the pencil lines 8 times a second, like hand animation
+  float wob = (noise(fc * 0.04 + boil * 7.13) - 0.5) * 4.0;
+
+  float t = 0.0, mat = 0.0, minEdge = 1e9;
+  bool settled = false;   // hit something or left the scene, rather than running out of steps
+  for (int i = 0; i < 180; i++) {
+    vec3 h = map(ro + rd * t);
+    minEdge = min(minEdge, h.z / max(t, 0.5));
+    if (h.x < 0.0008 * t) { mat = h.y; break; }
+    t += h.x * 0.9;
+    if (t > 40.0) { settled = true; break; }
+  }
+  if (mat > 0.0) settled = true;
+
+  vec3 col;
+  if (mat == 0.0) {
+    col = mix(vec3(0.9, 0.86, 0.78), PAPER, smoothstep(-0.5, 0.6, uv.y));
+  } else {
+    vec3 p = ro + rd * t, n = normalAt(p);
+    float diff = max(dot(n, L), 0.0);
+    if (mat == 1.0) {
+      float rim = 1.0 - max(dot(n, -rd), 0.0);
+      if (uStyle == 0) {
+        float tone = 0.15 + 0.85 * diff;
+        float h1 = lineMask((fc.x + fc.y + wob) / 6.0, 0.22) * (1.0 - smoothstep(0.55, 0.75, tone));
+        float h2 = lineMask((fc.x - fc.y + wob) / 6.0, 0.22) * (1.0 - smoothstep(0.3, 0.45, tone));
+        float h3 = lineMask((fc.y + wob * 0.5) / 4.5, 0.25) * (1.0 - smoothstep(0.1, 0.22, tone));
+        col = mix(PAPER, GRAPHITE, clamp(h1 * 0.55 + h2 * 0.6 + h3 * 0.6, 0.0, 0.9));
+        col = mix(col, GRAPHITE, smoothstep(0.6, 0.85, rim) * 0.85);
+      } else {
+        // Contour layers, like a stack of cut card: each band is its own sheet.
+        float k = (p.y - CENTER.y) * 9.0;
+        float hh = hash(vec2(floor(k), 3.7));
+        vec3 base = hh < 0.25 ? vec3(0.93, 0.45, 0.30) : hh < 0.5 ? vec3(0.97, 0.78, 0.42) : hh < 0.75 ? vec3(0.36, 0.55, 0.62) : vec3(0.95, 0.92, 0.84);
+        float toon = diff > 0.6 ? 1.0 : diff > 0.25 ? 0.82 : 0.64;
+        col = base * toon * mix(0.62, 1.0, smoothstep(0.0, 0.14, fract(k)));
+        col = mix(col, GRAPHITE, smoothstep(0.7, 0.9, rim) * 0.7);
+      }
+    } else if (mat == 4.0) {
+      // Paper eye; the pupil always turns toward the viewer.
+      vec3 c3 = distance(p, uEyeA) < distance(p, uEyeB) ? uEyeA : uEyeB;
+      float k = dot(normalize(p - c3), normalize(uCam - c3));
+      col = PAPER * (0.8 + 0.2 * diff);
+      col = mix(col, uStyle == 0 ? vec3(0.45) : vec3(0.85, 0.35, 0.2), smoothstep(0.78, 0.8, k));
+      col = mix(col, vec3(0.08), smoothstep(0.9, 0.92, k));
+      col = mix(col, GRAPHITE, smoothstep(0.55, 0.85, 1.0 - max(dot(n, -rd), 0.0)) * 0.9);
+    } else {
+      float sh = shadow(p + n * 0.01, L);
+      vec3 kraft = mat == 2.0 ? vec3(0.74, 0.57, 0.39) : vec3(0.80, 0.63, 0.43);
+      kraft *= 0.93 + 0.07 * (0.5 + 0.5 * sin((mat == 2.0 ? p.x : p.y) * 38.0));   // corrugation
+      kraft *= 0.9 + 0.1 * noise(p.xz * 14.0 + p.y * 5.0);
+      if (mat == 3.0 && n.y > 0.5 && abs(p.z + 1.4) < 0.08) kraft = vec3(0.86, 0.80, 0.62);  // tape
+      float face = n.y > 0.5 ? 1.0 : 0.78;
+      col = kraft * mix(0.55, 1.0, sh * diff) * face;
+      col = mix(col, col * 0.6, lineMask((fc.x + fc.y + wob) / 5.0, 0.2) * (1.0 - sh) * 0.8);
+      if (mat == 2.0 && n.y < 0.5) col = vec3(0.55, 0.40, 0.27);   // cut edge of the sheet
+    }
+  }
+
+  // Pencil outline wherever the ray grazed the creature without hitting it.
+  // A ray that ran out of steps was creeping along a slice that only just misses the body: no outline there.
+  if (mat != 1.0 && mat != 4.0 && settled) {
+    float edgeW = 0.0045 * (0.75 + 0.5 * noise(fc * 0.1 + boil));
+    col = mix(col, GRAPHITE, (1.0 - smoothstep(edgeW * 0.6, edgeW, minEdge)) * 0.85);
+  }
+
+  col *= 0.96 + 0.04 * hash(fc);   // paper grain
+  frag = vec4(col, 1.0);
+}
+</script>
+
+<script>
+(() => {
+  const canvas = document.getElementById('view');
+  const gl = canvas.getContext('webgl2', { antialias: false });
+  if (!gl) { document.getElementById('status').textContent = 'This page needs WebGL 2.'; return; }
+
+  const vsrc = `#version 300 es
+in vec2 pos; void main() { gl_Position = vec4(pos, 0.0, 1.0); }`;
+  function compile(type, src) {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsrc));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, document.getElementById('frag').textContent));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'pos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const U = {};
+  for (const n of ['uRes', 'uTime', 'uW', 'uRot', 'uShape', 'uStyle', 'uCam', 'uTarget', 'uShift', 'uEyeA', 'uEyeB']) U[n] = gl.getUniformLocation(prog, n);
+
+  // 4D rotations: one per plane, composed. Row-major here, transposed on upload.
+  function planeRot(i, j, a) {
+    const m = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1], c = Math.cos(a), s = Math.sin(a);
+    m[i*4+i] = c; m[i*4+j] = -s; m[j*4+i] = s; m[j*4+j] = c; return m;
+  }
+  function mul(a, b) {
+    const r = new Array(16).fill(0);
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) for (let k = 0; k < 4; k++) r[i*4+j] += a[i*4+k] * b[k*4+j];
+    return r;
+  }
+  const transpose = m => [0,4,8,12, 1,5,9,13, 2,6,10,14, 3,7,11,15].map(i => m[i]);
+
+  const ui = {
+    shape: document.getElementById('shape'), style: document.getElementById('style'),
+    w: document.getElementById('w'), drift: document.getElementById('drift'), spin: document.getElementById('spin'),
+    status: document.getElementById('status'), sense: document.getElementById('sense'), strip: document.getElementById('strip'),
+  };
+  // Furthest any part of each shape reaches from its centre, in 4D.
+  const EXTENT = [1.5, 1.0, 1.24, 1.45];
+  // Must match EYE_A, EYE_B and EYE_R in the shader.
+  const EYES = [[-0.2, 0.18, 0.6, 0.5], [0.2, 0.18, 0.6, 0.5]], EYE_R = 0.17, CENTER = [0, 1.5, 0];
+  // Where an eye is: x4 = R^T c gives its 3D centre (relative to the body) and its place along w.
+  function eyeAt(R, c, w) {
+    const v = [0, 1, 2, 3].map(j => R[j] * c[0] + R[4 + j] * c[1] + R[8 + j] * c[2] + R[12 + j] * c[3]);
+    return { pos: [CENTER[0] + v[0], CENTER[1] + v[1], CENTER[2] + v[2]], w: w + v[3] };
+  }
+  ui.w.addEventListener('input', () => { ui.drift.checked = false; });
+  document.getElementById('toggle').addEventListener('click', e => {
+    const p = document.getElementById('panel'); p.classList.toggle('hidden');
+    e.target.textContent = p.classList.contains('hidden') ? 'show' : 'hide';
+  });
+
+  const cam = { yaw: 0.6, pitch: 0.32, dist: 6 };
+  let drag = null;
+  canvas.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); canvas.classList.add('drag'); });
+  canvas.addEventListener('pointermove', e => {
+    if (!drag) return;
+    cam.yaw -= (e.clientX - drag.x) * 0.006;
+    cam.pitch = Math.min(1.2, Math.max(0.03, cam.pitch + (e.clientY - drag.y) * 0.004));
+    drag = { x: e.clientX, y: e.clientY };
+  });
+  canvas.addEventListener('pointerup', () => { drag = null; canvas.classList.remove('drag'); });
+  canvas.addEventListener('wheel', e => { e.preventDefault(); cam.dist = Math.min(10, Math.max(2.5, cam.dist * Math.exp(e.deltaY * 0.001))); }, { passive: false });
+
+  let paused = false;
+  addEventListener('keydown', e => { if (e.code === 'Space' && e.target.tagName !== 'SELECT') { paused = !paused; e.preventDefault(); } });
+
+  function resize() {
+    const s = Math.min(devicePixelRatio || 1, 1.5);
+    canvas.width = Math.round(innerWidth * s); canvas.height = Math.round(innerHeight * s);
+    const r = ui.strip.getBoundingClientRect();
+    ui.strip.width = Math.round(r.width * devicePixelRatio); ui.strip.height = Math.round(r.height * devicePixelRatio);
+  }
+  addEventListener('resize', resize); resize();
+
+  // The Flatland view: the w axis, our world as a line across it, and the creature's reach.
+  function drawStrip(w, extent, eyes) {
+    const c = ui.strip, g = c.getContext('2d'), dpr = devicePixelRatio, W = c.width / dpr, H = c.height / dpr;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    const x = v => W / 2 + v / 2.6 * (W / 2 - 8), mid = 38;
+    g.strokeStyle = '#2b2a2e'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(6, mid); g.lineTo(W - 6, mid); g.stroke();
+    g.beginPath(); g.moveTo(W - 12, mid - 4); g.lineTo(W - 6, mid); g.lineTo(W - 12, mid + 4); g.stroke();
+    g.fillStyle = 'rgba(196,83,47,.18)'; g.strokeStyle = '#2b2a2e';
+    g.beginPath();
+    for (let i = 0; i <= 40; i++) {
+      const a = i / 40 * Math.PI * 2, wob = 1 + 0.04 * Math.sin(a * 5 + w * 3);
+      const px = x(w) + Math.cos(a) * (x(extent) - x(0)) * wob, py = mid + Math.sin(a) * 14 * wob;
+      i ? g.lineTo(px, py) : g.moveTo(px, py);
+    }
+    g.closePath(); g.fill(); g.stroke();
+    for (const e of eyes) {
+      g.fillStyle = Math.abs(e.w) < EYE_R ? '#c4532f' : '#2b2a2e';
+      g.beginPath(); g.arc(x(e.w), mid - 20, 3.5, 0, Math.PI * 2); g.fill();
+    }
+    g.strokeStyle = '#c4532f'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(x(0), 10); g.lineTo(x(0), H - 18); g.stroke();
+    g.fillStyle = '#2b2a2e'; g.font = 'italic 12px Georgia, serif'; g.textAlign = 'center';
+    g.fillText('our world (w = 0)', x(0), H - 4);
+    g.textAlign = 'right'; g.fillText('w', W - 8, mid - 8);
+  }
+
+  let last = performance.now(), clock = 0, phase = 0, drift = 0;
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!paused) {
+      clock += dt; phase += dt * parseFloat(ui.spin.value);
+      if (ui.drift.checked) { drift += dt; ui.w.value = (1.9 * Math.sin(drift * 0.22)).toFixed(2); }
+    }
+    const shape = +ui.shape.value, w = parseFloat(ui.w.value), extent = EXTENT[shape];
+
+    // The fixed offsets keep a flat face of the body from ever lying exactly in our slice,
+    // where its surface would be undefined and render as noise.
+    let R = planeRot(0, 3, 0.35 + phase * 0.31);
+    R = mul(R, planeRot(1, 3, 0.2 + phase * 0.23));
+    R = mul(R, planeRot(2, 3, phase * 0.17));
+    R = mul(R, planeRot(0, 2, phase * 0.11));
+
+    const tgt = [0, 1.35, 0];
+    const eye = [tgt[0] + cam.dist * Math.cos(cam.pitch) * Math.sin(cam.yaw), tgt[1] + cam.dist * Math.sin(cam.pitch), tgt[2] + cam.dist * Math.cos(cam.pitch) * Math.cos(cam.yaw)];
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U.uRes, canvas.width, canvas.height);
+    gl.uniform1f(U.uTime, clock);
+    gl.uniform1f(U.uW, w);
+    gl.uniformMatrix4fv(U.uRot, false, new Float32Array(transpose(R)));
+    gl.uniform1i(U.uShape, shape);
+    gl.uniform1i(U.uStyle, +ui.style.value);
+    gl.uniform3fv(U.uCam, eye);
+    gl.uniform3fv(U.uTarget, tgt);
+    const panelOpen = !document.getElementById('panel').classList.contains('hidden');
+    gl.uniform1f(U.uShift, panelOpen && innerWidth > 760 ? 0.17 * innerWidth / innerHeight * 0.5 : 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    const eyes = shape === 0 ? EYES.map(c => eyeAt(R, c, w)) : [];
+    gl.uniform3fv(U.uEyeA, eyes[0] ? eyes[0].pos : [0, -9, 0]);
+    gl.uniform3fv(U.uEyeB, eyes[1] ? eyes[1].pos : [0, -9, 0]);
+    const sees = eyes.some(e => Math.abs(e.w) < EYE_R);
+    ui.sense.className = sees ? 'sees' : '';
+    ui.sense.textContent = shape !== 0 ? '' : sees ? 'Its eyes are in our world: it sees you' : 'Eyes elsewhere in w: it is blind';
+    drawStrip(w, extent, eyes);
+    const aw = Math.abs(w);
+    ui.status.textContent = paused ? 'Paused.' :
+      aw > extent ? 'Not in our world. It is still there, a short step away along w.' :
+      aw > extent * 0.7 ? 'Only its edge crosses our world: a small, strange sliver.' :
+      'Passing through our world. Each shape you see is one slice of a single 4D body.';
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cardboard Walkthrough</title>
+<style>
+  :root { --paper:#f4efe3; --ink:#2b2a2e; --kraft:#b98d5e; --accent:#c4532f; }
+  html, body { margin:0; height:100%; background:#1d1b19; color:var(--ink); font:14px/1.4 Georgia, "Times New Roman", serif; overflow:hidden; user-select:none; }
+  canvas#view { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .cross { position:fixed; left:50%; top:50%; width:6px; height:6px; margin:-3px 0 0 -3px; border-radius:50%; background:rgba(43,42,46,.75); box-shadow:0 0 0 2px rgba(244,239,227,.5); pointer-events:none; }
+
+  .help { position:fixed; left:16px; top:16px; max-width:min(330px, calc(100% - 32px)); background:rgba(250,246,236,.94); border:1.5px solid var(--ink);
+    box-shadow:4px 4px 0 rgba(0,0,0,.25); padding:10px 13px; transform:rotate(-.5deg); transition:opacity .4s; }
+  .help h1 { font-size:17px; margin:0 0 4px; }
+  .help p { margin:4px 0; }
+  .help kbd { font:12px ui-monospace, Consolas, monospace; border:1px solid var(--ink); border-bottom-width:2px; padding:0 4px; background:#fffdf7; }
+  .help.faded { opacity:.25; }
+
+  .sense { position:fixed; left:50%; top:14px; transform:translateX(-50%) rotate(.6deg); background:rgba(250,246,236,.92); border:1.5px solid var(--ink);
+    padding:4px 12px 4px 8px; display:flex; align-items:center; gap:8px; font:bold 12px Georgia, serif; letter-spacing:1px; text-transform:uppercase; color:#6b665c; }
+  .sense svg { width:34px; height:20px; }
+  .sense.sees { color:var(--accent); border-color:var(--accent); }
+
+  .style { position:fixed; right:16px; top:14px; background:rgba(250,246,236,.92); border:1.5px solid var(--ink); padding:4px 10px; font-size:12px; transform:rotate(-.6deg); }
+
+  /* The wrist band: a strip of kraft card with a paper label taped on. Mock-up only. */
+  .wrist { position:fixed; right:22px; bottom:-330px; width:min(360px, calc(100% - 44px)); transition:bottom .18s ease-out; transform:rotate(-3deg); pointer-events:none; }
+  .wrist.up { bottom:18px; }
+  .band { background:linear-gradient(90deg, #a87a4b, #c09162 40%, #b0814f); border:1.5px solid #4a3522; border-radius:6px; padding:10px 12px 12px; box-shadow:5px 6px 0 rgba(0,0,0,.3); }
+  .label { background:#f8f4ea; border:1px solid #6b5a45; padding:8px 10px; position:relative; }
+  .label::before, .label::after { content:""; position:absolute; top:-7px; width:46px; height:14px; background:rgba(232,220,170,.85); }
+  .label::before { left:14px; transform:rotate(-4deg); } .label::after { right:14px; transform:rotate(5deg); }
+  .row { display:flex; justify-content:space-between; align-items:baseline; font-size:12px; }
+  .row b { font-size:15px; }
+  .views { display:flex; gap:6px; margin:8px 0; }
+  .view { flex:1; height:58px; border:1px solid var(--ink); font:italic 11px Georgia, serif; display:flex; align-items:flex-end; padding:3px; box-sizing:border-box;
+    background:repeating-linear-gradient(45deg, rgba(43,42,46,.16) 0 1px, transparent 1px 5px), #eae3d2; }
+  .view.v2 { background:repeating-linear-gradient(-45deg, rgba(43,42,46,.16) 0 1px, transparent 1px 5px), #e2ecea; }
+  .view.q { align-items:center; justify-content:center; font:bold 26px Georgia, serif; color:#8a857a;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 2px, transparent 2px 3px), #d9d4c8; animation:static .25s steps(3) infinite; }
+  @keyframes static { 0% { background-position:0 0; } 100% { background-position:0 9px; } }
+  .tl { position:relative; margin:6px 0 4px; }
+  .tl .r { position:relative; height:14px; margin:3px 0 3px 42px; border-bottom:1.5px solid #6b5a45; }
+  .tl .r span { position:absolute; left:-42px; top:-2px; font-size:11px; }
+  .tl .pin { position:absolute; top:-1px; width:10px; height:10px; border-radius:50%; border:1.5px solid var(--ink); background:#f8f4ea; transform:translateX(-5px); }
+  .tl .pin.paid { background:var(--accent); }
+  .tl .now { position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--accent); }
+  .matter { font-size:11px; margin-top:6px; }
+  .gauge { height:8px; border:1px solid var(--ink); margin-top:2px; background:#fffdf7; }
+  .gauge i { display:block; height:100%; width:62%; background:repeating-linear-gradient(90deg, #5a7f86 0 3px, #6f949b 3px 6px); }
+  .mock { font:italic 10px Georgia, serif; color:#6b665c; margin-top:6px; text-align:right; }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div class="cross"></div>
+
+<div class="help" id="help">
+  <h1>Cardboard walkthrough</h1>
+  <p>A dry run of the look, with no game rules. Click to look around with the mouse (<kbd>Esc</kbd> frees it).</p>
+  <p><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk &nbsp; <kbd>Q</kbd> raise the wrist band<br>
+     <kbd>1</kbd> pencil creature &nbsp; <kbd>2</kbd> layered-paper creature</p>
+  <p>Round the corner: a blue paper echo walking the hall, a pencil sketch on a plate (an unpaid promise), a taped door, and the creature. It can only see while one of its eyes is in our world.</p>
+</div>
+
+<div class="sense" id="sense">
+  <svg viewBox="0 0 34 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+    <path id="lid" d="M2 10 Q17 1 32 10 Q17 19 2 10 Z"/><circle id="pupil" cx="17" cy="10" r="4" fill="currentColor"/>
+  </svg>
+  <span id="senseText">blind</span>
+</div>
+<div class="style" id="styleTag">creature: pencil</div>
+
+<div class="wrist" id="wrist">
+  <div class="band"><div class="label">
+    <div class="row"><span>run 3 &middot; you</span><b id="clock">0:00</b></div>
+    <div class="views"><div class="view">echo 1</div><div class="view v2">echo 2</div><div class="view q">?</div></div>
+    <div class="tl">
+      <div class="r"><span>run 1</span><i class="pin" style="left:62%"></i></div>
+      <div class="r"><span>run 2</span><i class="pin paid" style="left:30%"></i></div>
+      <div class="r"><span>you</span><i class="now" id="now" style="left:0%"></i></div>
+    </div>
+    <div class="matter">exotic matter<div class="gauge"><i></i></div></div>
+    <div class="mock">mock-up: nothing on the band is live yet</div>
+  </div></div>
+</div>
+
+<script id="frag" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+uniform vec2 uRes;
+uniform float uTime;
+uniform float uW;        // the creature's position along w; our world is w = 0
+uniform mat4 uRot;       // the creature's 4D orientation
+uniform int uStyle;      // 0 pencil, 1 layered paper
+uniform vec3 uCam;
+uniform vec3 uFwd;
+uniform vec3 uCenter;    // the creature's centre in our world
+uniform vec3 uEyeA;      // 3D centres of the eyes' slices
+uniform vec3 uEyeB;
+uniform vec3 uEchoPos;   // the walking echo
+uniform float uEchoYaw;
+uniform float uEchoStep; // walk cycle phase
+out vec4 frag;
+
+const float S = 0.7;     // the creature's scale in this room
+const float WALL_H = 2.6;
+const vec3 PAPER = vec3(0.965, 0.945, 0.89);
+const vec3 GRAPHITE = vec3(0.22, 0.22, 0.26);
+const vec3 L = normalize(vec3(-0.35, 1.0, 0.25));
+
+float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float noise(vec2 p) {
+  vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
+}
+float smin(float a, float b, float k) { float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0); return mix(b, a, h) - k * h * (1.0 - h); }
+float sdBox3(vec3 p, vec3 b) { vec3 d = abs(p) - b; return length(max(d, 0.0)) + min(max(d.x, max(d.y, d.z)), 0.0); }
+float sdRect(vec2 p, vec2 c, vec2 h) { vec2 d = abs(p - c) - h; return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0); }
+mat2 rot2(float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+float lineMask(float c, float w) { return 1.0 - smoothstep(w, w + 0.12, abs(fract(c) - 0.5) * 2.0); }
+
+// The L-shaped room: a corridor running north, then a hall running east.
+float interior(vec2 xz) { return min(sdRect(xz, vec2(0.0, -3.0), vec2(2.0, 5.0)), sdRect(xz, vec2(5.0, -6.0), vec2(7.0, 2.0))); }
+
+// ---- the creature (same body as creature-4d) ----
+float sdTess(vec4 q, vec4 b, float r) { vec4 d = abs(q) - b; return length(max(d, 0.0)) + min(max(max(d.x, d.y), max(d.z, d.w)), 0.0) - r; }
+float sdDitorus(vec4 q, float R1, float R2, float r) {
+  float a = length(q.xz) - R1; float b = length(vec2(a, q.y)) - R2; return length(vec2(b, q.w)) - r;
+}
+float creature4(vec4 q) {
+  float d = sdTess(q, vec4(0.34), 0.14);
+  for (int i = 0; i < 5; i++) {
+    float fi = float(i), a = uTime * 0.5 + fi * 1.2566;
+    vec4 c = vec4(cos(a) * 0.8, 0.45 * sin(fi * 2.3 + uTime * 0.3), sin(a) * 0.55, 0.85 * sin(a * 1.3 + fi * 1.7));
+    d = smin(d, length(q - c) - 0.26, 0.28);
+  }
+  return min(d, sdDitorus(q, 1.1, 0.12, 0.06));
+}
+const vec4 EYE_A = vec4(-0.2, 0.18, 0.6, 0.5);
+const vec4 EYE_B = vec4(0.2, 0.18, 0.6, 0.5);
+const float EYE_R = 0.17;
+vec2 creatureDist(vec3 p) {
+  vec4 q = uRot * vec4((p - uCenter) / S, -uW);
+  return vec2(creature4(q), min(length(q - EYE_A), length(q - EYE_B)) - EYE_R) * S;
+}
+
+// ---- paper dolls: a flat cut-out figure, 1.7 m tall, a few millimetres thick ----
+// step: walk-cycle phase; amt: 0 standing, 1 walking. A paper doll walks by rocking
+// from foot to foot and lifting the other leg, like a cut-out puppet.
+float doll2D(vec2 u, float step, float amt) {
+  float lift = sin(step) * amt;
+  u.y -= 0.03 * abs(cos(step)) * amt;
+  u = rot2(0.07 * lift) * u;
+  float liftL = max(lift, 0.0) * 0.07, liftR = max(-lift, 0.0) * 0.07;
+  float d = length(u - vec2(0.0, 1.52)) - 0.15;
+  d = min(d, sdRect(u, vec2(0.0, 1.05), vec2(0.17, 0.28)) - 0.05);
+  d = min(d, sdRect(u, vec2(-0.27, 1.02 + liftR), vec2(0.04, 0.26)) - 0.025);
+  d = min(d, sdRect(u, vec2(0.27, 1.02 + liftL), vec2(0.04, 0.26)) - 0.025);
+  d = min(d, sdRect(u, vec2(-0.09, 0.4 + liftL), vec2(0.055, 0.38)) - 0.02);
+  d = min(d, sdRect(u, vec2(0.09, 0.4 + liftR), vec2(0.055, 0.38)) - 0.02);
+  return d;
+}
+vec3 dollLocal(vec3 p, vec3 base, float yaw) { vec3 l = p - base; l.xz = rot2(yaw) * l.xz; return l; }
+float sdDoll(vec3 p, vec3 base, float yaw, float step, float amt) {
+  vec3 l = dollLocal(p, base, yaw);
+  vec2 w = vec2(doll2D(l.xy, step, amt), abs(l.z) - 0.006);
+  return min(max(w.x, w.y), 0.0) + length(max(w, 0.0));
+}
+const vec3 SKETCH_POS = vec3(10.4, 0.03, -6.0); const float SKETCH_YAW = 1.57;
+
+// x: distance, y: material, z: creature distance (for its outline)
+// materials: 1 creature, 2 floor, 3 wall, 4 eye, 5 box, 6 plate, 7 echo doll, 8 pencil doll
+vec3 map(vec3 p) {
+  vec2 c = creatureDist(p);
+  vec3 r = vec3(c.x, 1.0, min(c.x, c.y));
+  if (c.y < r.x) r.xy = vec2(c.y, 4.0);
+  float d = p.y;                                                  if (d < r.x) r.xy = vec2(d, 2.0);
+  d = max(-interior(p.xz), p.y - WALL_H);                         if (d < r.x) r.xy = vec2(d, 3.0);
+  vec3 b = p - vec3(1.35, 0.4, -1.3); b.xz = rot2(0.35) * b.xz;
+  d = sdBox3(b, vec3(0.4)) - 0.01;
+  b = p - vec3(-1.45, 0.35, -7.4);    d = min(d, sdBox3(b, vec3(0.36)) - 0.01);
+  b = p - vec3(-1.4, 0.96, -7.3); b.xz = rot2(-0.5) * b.xz; d = min(d, sdBox3(b, vec3(0.25)) - 0.01);
+  if (d < r.x) r.xy = vec2(d, 5.0);
+  vec2 cy = vec2(length(p.xz - SKETCH_POS.xz) - 0.48, abs(p.y - 0.012) - 0.012);
+  d = min(max(cy.x, cy.y), 0.0) + length(max(cy, 0.0));          if (d < r.x) r.xy = vec2(d, 6.0);
+  d = sdDoll(p, uEchoPos, uEchoYaw, uEchoStep, 1.0);                            if (d < r.x) r.xy = vec2(d, 7.0);
+  d = sdDoll(p, SKETCH_POS, SKETCH_YAW, 0.0, 0.0);                        if (d < r.x) r.xy = vec2(d, 8.0);
+  return r;
+}
+
+vec3 normalAt(vec3 p) {
+  const vec2 k = vec2(1, -1); const float e = 0.001;
+  return normalize(k.xyy * map(p + k.xyy * e).x + k.yyx * map(p + k.yyx * e).x +
+                   k.yxy * map(p + k.yxy * e).x + k.xxx * map(p + k.xxx * e).x);
+}
+float shadow(vec3 ro, vec3 rd) {
+  float res = 1.0, t = 0.02;
+  for (int i = 0; i < 40; i++) {
+    float h = map(ro + rd * t).x;
+    res = min(res, 8.0 * h / t);
+    if (res < 0.01) break;
+    t += clamp(h, 0.03, 0.5);
+    if (t > 8.0) break;
+  }
+  return clamp(res, 0.0, 1.0);
+}
+float ao(vec3 p, vec3 n) {
+  float o = 0.0, s = 1.0;
+  for (int i = 1; i <= 4; i++) { float h = 0.06 * float(i); o += (h - map(p + n * h).x) * s; s *= 0.6; }
+  return clamp(1.0 - 2.2 * o, 0.0, 1.0);
+}
+
+vec3 crayon(vec2 xz, vec3 tint, float dist) {
+  vec2 u = rot2(0.4) * xz;
+  float strokes = lineMask(u.y * 26.0 + noise(u * vec2(1.5, 9.0)) * 2.5, 0.55);
+  strokes = mix(strokes, 0.6, smoothstep(3.0, 10.0, dist));   // fine strokes blur together far away instead of shimmering
+  float cover = smoothstep(0.25, 0.6, noise(xz * 2.2 + 3.0)) * 0.35 + 0.6;
+  return mix(PAPER, tint, strokes * cover);
+}
+
+void main() {
+  vec2 fc = gl_FragCoord.xy;
+  vec2 uv = (fc - 0.5 * uRes) / uRes.y;
+  vec3 rt = normalize(cross(uFwd, vec3(0, 1, 0)));
+  vec3 up = cross(rt, uFwd);
+  vec3 rd = normalize(rt * uv.x + up * uv.y + uFwd * 1.15);
+  vec3 ro = uCam;
+
+  float boil = floor(uTime * 8.0);
+  float wob = (noise(fc * 0.04 + boil * 7.13) - 0.5) * 4.0;
+
+  float t = 0.0, mat = 0.0, minEdge = 1e9;
+  bool settled = false;   // hit something or left the scene, rather than running out of steps
+  for (int i = 0; i < 200; i++) {
+    vec3 h = map(ro + rd * t);
+    minEdge = min(minEdge, h.z / max(t, 0.3));
+    if (h.x < 0.0006 * t + 0.0002) { mat = h.y; break; }
+    t += h.x * 0.9;
+    if (t > 30.0) { settled = true; break; }
+  }
+  if (mat > 0.0) settled = true;
+
+  vec3 col;
+  if (mat == 0.0) {
+    // Above the walls: the paper backdrop of the room the box sits in.
+    col = mix(vec3(0.93, 0.89, 0.8), vec3(0.98, 0.96, 0.9), smoothstep(0.0, 0.6, rd.y));
+  } else {
+    vec3 p = ro + rd * t, n = normalAt(p);
+    float diff = max(dot(n, L), 0.0);
+    float rim = 1.0 - max(dot(n, -rd), 0.0);
+    if (mat == 1.0) {
+      if (uStyle == 0) {
+        float tone = 0.15 + 0.85 * diff;
+        float h1 = lineMask((fc.x + fc.y + wob) / 6.0, 0.22) * (1.0 - smoothstep(0.55, 0.75, tone));
+        float h2 = lineMask((fc.x - fc.y + wob) / 6.0, 0.22) * (1.0 - smoothstep(0.3, 0.45, tone));
+        float h3 = lineMask((fc.y + wob * 0.5) / 4.5, 0.25) * (1.0 - smoothstep(0.1, 0.22, tone));
+        col = mix(PAPER, GRAPHITE, clamp(h1 * 0.55 + h2 * 0.6 + h3 * 0.6, 0.0, 0.9));
+        col = mix(col, GRAPHITE, smoothstep(0.6, 0.85, rim) * 0.85);
+      } else {
+        float k = (p.y - uCenter.y) / S * 9.0;
+        float hh = hash(vec2(floor(k), 3.7));
+        vec3 base = hh < 0.25 ? vec3(0.93, 0.45, 0.30) : hh < 0.5 ? vec3(0.97, 0.78, 0.42) : hh < 0.75 ? vec3(0.36, 0.55, 0.62) : vec3(0.95, 0.92, 0.84);
+        float toon = diff > 0.6 ? 1.0 : diff > 0.25 ? 0.82 : 0.64;
+        col = base * toon * mix(0.62, 1.0, smoothstep(0.0, 0.14, fract(k)));
+        col = mix(col, GRAPHITE, smoothstep(0.7, 0.9, rim) * 0.7);
+      }
+    } else if (mat == 4.0) {
+      vec3 c3 = distance(p, uEyeA) < distance(p, uEyeB) ? uEyeA : uEyeB;
+      float k = dot(normalize(p - c3), normalize(uCam - c3));
+      col = PAPER * (0.8 + 0.2 * diff);
+      col = mix(col, uStyle == 0 ? vec3(0.45) : vec3(0.85, 0.35, 0.2), smoothstep(0.78, 0.8, k));
+      col = mix(col, vec3(0.08), smoothstep(0.9, 0.92, k));
+      col = mix(col, GRAPHITE, smoothstep(0.55, 0.85, rim) * 0.9);
+    } else {
+      float sh = shadow(p + n * 0.01, L);
+      float occ = ao(p, n);
+      vec3 base;
+      if (mat == 2.0) {
+        bool hall = p.x > 2.0;
+        base = crayon(p.xz, hall ? vec3(0.86, 0.68, 0.42) : vec3(0.55, 0.70, 0.72), t);
+      } else if (mat == 3.0) {
+        float along = abs(n.x) > 0.5 ? p.z : p.x;
+        base = vec3(0.77, 0.61, 0.43) * (0.93 + 0.07 * sin(along * 46.0));
+        base *= 0.92 + 0.08 * noise(vec2(along, p.y) * 9.0);
+        if (p.y > WALL_H - 0.04) base = vec3(0.86, 0.74, 0.56) * (0.85 + 0.15 * sin(along * 140.0));   // cut edge shows the flutes
+        if (p.y > 0.1 && p.y < 0.15 + 0.01 * sin(along * 7.0)) base = mix(base, vec3(0.7, 0.25, 0.2), 0.7);  // crayon skirting line
+        // A masking-tape door on the far wall of the hall.
+        if (n.x < -0.5 && p.x > 11.9) {
+          vec2 dp = vec2(p.z + 6.0, p.y - 1.05);
+          float door = sdRect(dp, vec2(0.0), vec2(0.72, 1.05));
+          if (door < 0.0) base *= 0.82;
+          if (abs(door + 0.04) < 0.045) base = vec3(0.9, 0.85, 0.64) * (0.95 + 0.05 * noise(dp * 40.0));
+          if (length(dp - vec2(0.5, 0.0)) < 0.05) base = vec3(0.3, 0.3, 0.33);   // knob
+        }
+        // A physics note pinned to the corridor wall.
+        if (n.x > 0.5 && p.x < -1.9) {
+          vec2 np = vec2(p.z + 2.0, p.y - 1.5);
+          vec2 nr = rot2(0.06) * np;
+          if (sdRect(nr, vec2(0.0), vec2(0.26, 0.2)) < 0.0) {
+            base = vec3(0.97, 0.96, 0.9);
+            if (abs(nr.x) < 0.2 && nr.y < 0.12 && nr.y > -0.16) base = mix(base, GRAPHITE, lineMask(nr.y * 22.0, 0.12) * step(nr.x, 0.2 - 0.15 * hash(vec2(floor(nr.y * 22.0), 1.0))) * 0.7);
+          }
+          if (length(np - vec2(0.0, 0.17)) < 0.025) base = vec3(0.8, 0.2, 0.15);   // pin
+        }
+      } else if (mat == 5.0) {
+        base = vec3(0.80, 0.63, 0.43) * (0.93 + 0.07 * sin((p.x + p.z) * 40.0));
+        if (n.y > 0.5 && abs(fract(p.x * 1.0) - 0.5) < 0.07) base = vec3(0.88, 0.82, 0.62);
+      } else if (mat == 6.0) {
+        base = n.y > 0.5 ? vec3(0.88, 0.40, 0.27) : vec3(0.6, 0.25, 0.17);
+        base *= 0.92 + 0.08 * noise(p.xz * 30.0);
+      } else {
+        // Paper dolls. The echo is coloured in; the promise is still a pencil sketch.
+        bool echo = mat == 7.0;
+        vec3 l = dollLocal(p, echo ? uEchoPos : SKETCH_POS, echo ? uEchoYaw : SKETCH_YAW);
+        float d2 = doll2D(l.xy, echo ? uEchoStep : 0.0, echo ? 1.0 : 0.0);
+        if (mat == 7.0) {
+          base = crayon(l.xy * 1.3, vec3(0.32, 0.5, 0.78), 0.0);
+          if (d2 > -0.025) base = GRAPHITE;
+        } else {
+          base = PAPER;
+          base = mix(base, GRAPHITE, lineMask((fc.x - fc.y + wob) / 7.0, 0.18) * 0.35);
+          float sketchy = 0.012 + 0.012 * noise(l.xy * 30.0 + boil);
+          if (d2 > -sketchy) base = GRAPHITE * 1.3;
+        }
+        if (abs(l.z) < 0.005) base = GRAPHITE;   // the cut edge, seen when it turns side-on
+      }
+      float light = mix(0.5, 1.0, sh * diff) * mix(0.55, 1.0, occ);
+      col = base * light;
+      col = mix(col, col * 0.62, lineMask((fc.x + fc.y + wob) / 5.0, 0.2) * (1.0 - sh) * 0.8 * step(0.5, n.y));  // hatched shadows on the floor
+      col = mix(col, col * 0.8, smoothstep(6.0, 22.0, t));   // a little depth
+    }
+  }
+
+  // A ray that ran out of steps was creeping along a slice that only just misses the body: no outline there.
+  if (mat != 1.0 && mat != 4.0 && settled) {
+    float edgeW = 0.0045 * (0.75 + 0.5 * noise(fc * 0.1 + boil));
+    col = mix(col, GRAPHITE, (1.0 - smoothstep(edgeW * 0.6, edgeW, minEdge)) * 0.85);
+  }
+  col *= 0.96 + 0.04 * hash(fc);
+  frag = vec4(col, 1.0);
+}
+</script>
+
+<script>
+(() => {
+  const canvas = document.getElementById('view');
+  const gl = canvas.getContext('webgl2', { antialias: false });
+  if (!gl) { document.getElementById('help').innerHTML = '<p>This page needs WebGL 2.</p>'; return; }
+
+  function compile(type, src) {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, '#version 300 es\nin vec2 pos; void main() { gl_Position = vec4(pos, 0.0, 1.0); }'));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, document.getElementById('frag').textContent));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'pos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const U = {};
+  for (const n of ['uRes', 'uTime', 'uW', 'uRot', 'uStyle', 'uCam', 'uFwd', 'uCenter', 'uEyeA', 'uEyeB', 'uEchoPos', 'uEchoYaw', 'uEchoStep']) U[n] = gl.getUniformLocation(prog, n);
+
+  // ---- room geometry (must match interior() in the shader) ----
+  const rect = (x, z, cx, cz, hx, hz) => {
+    const dx = Math.abs(x - cx) - hx, dz = Math.abs(z - cz) - hz;
+    return Math.hypot(Math.max(dx, 0), Math.max(dz, 0)) + Math.min(Math.max(dx, dz), 0);
+  };
+  const interior = (x, z) => Math.min(rect(x, z, 0, -3, 2, 5), rect(x, z, 5, -6, 7, 2));
+  const PROPS = [[1.35, -1.3, 0.62], [-1.45, -7.4, 0.55]];  // x, z, radius to keep clear of
+  const free = (x, z) => interior(x, z) < -0.3 && PROPS.every(([px, pz, r]) => Math.hypot(x - px, z - pz) > r);
+
+  // ---- 4D rotation (row-major, transposed on upload) ----
+  function planeRot(i, j, a) {
+    const m = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1], c = Math.cos(a), s = Math.sin(a);
+    m[i*4+i] = c; m[i*4+j] = -s; m[j*4+i] = s; m[j*4+j] = c; return m;
+  }
+  function mul(a, b) {
+    const r = new Array(16).fill(0);
+    for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) for (let k = 0; k < 4; k++) r[i*4+j] += a[i*4+k] * b[k*4+j];
+    return r;
+  }
+  const transpose = m => [0,4,8,12, 1,5,9,13, 2,6,10,14, 3,7,11,15].map(i => m[i]);
+  const S = 0.7, EYES = [[-0.2, 0.18, 0.6, 0.5], [0.2, 0.18, 0.6, 0.5]], EYE_R = 0.17;
+  function eyeAt(R, c, w, center) {
+    const v = [0, 1, 2, 3].map(j => R[j] * c[0] + R[4 + j] * c[1] + R[8 + j] * c[2] + R[12 + j] * c[3]);
+    return { pos: [center[0] + S * v[0], center[1] + S * v[1], center[2] + S * v[2]], w: w + v[3] };
+  }
+
+  // ---- input ----
+  const me = { x: 0, z: 1.0, yaw: 0, pitch: -0.05 };
+  const keys = new Set();
+  let style = 0, locked = false, dragging = null;
+  addEventListener('keydown', e => {
+    keys.add(e.code);
+    if (e.code === 'Digit1') style = 0;
+    if (e.code === 'Digit2') style = 1;
+    document.getElementById('styleTag').textContent = 'creature: ' + (style ? 'layered paper' : 'pencil');
+  });
+  addEventListener('keyup', e => keys.delete(e.code));
+  addEventListener('blur', () => keys.clear());
+  canvas.addEventListener('click', () => { if (canvas.requestPointerLock) canvas.requestPointerLock(); });
+  document.addEventListener('pointerlockchange', () => {
+    locked = document.pointerLockElement === canvas;
+    document.getElementById('help').classList.toggle('faded', locked);
+  });
+  const look = (dx, dy) => { me.yaw += dx * 0.0025; me.pitch = Math.max(-1.2, Math.min(1.2, me.pitch - dy * 0.0025)); };
+  addEventListener('mousemove', e => { if (locked) look(e.movementX, e.movementY); });
+  // Without pointer lock (touch, or if it is refused), drag to look.
+  canvas.addEventListener('pointerdown', e => { if (!locked) dragging = { x: e.clientX, y: e.clientY }; });
+  addEventListener('pointermove', e => { if (dragging) { look(e.clientX - dragging.x, e.clientY - dragging.y); dragging = { x: e.clientX, y: e.clientY }; } });
+  addEventListener('pointerup', () => { dragging = null; });
+
+  const SCALE = 0.75;
+  function resize() {
+    const s = Math.min(devicePixelRatio || 1, 1.25) * SCALE;
+    canvas.width = Math.round(innerWidth * s); canvas.height = Math.round(innerHeight * s);
+  }
+  addEventListener('resize', resize); resize();
+
+  // Clear line of sight between two points, through the room only (walls block it).
+  function lineOfSight(a, b) {
+    for (let i = 1; i < 60; i++) {
+      const t = i / 60, x = a[0] + (b[0] - a[0]) * t, z = a[2] + (b[2] - a[2]) * t;
+      if (interior(x, z) > 0) return false;
+    }
+    return true;
+  }
+
+  const ui = { sense: document.getElementById('sense'), text: document.getElementById('senseText'), lid: document.getElementById('lid'),
+    pupil: document.getElementById('pupil'), wrist: document.getElementById('wrist'), clock: document.getElementById('clock'), now: document.getElementById('now') };
+  const beast = { x: 8.5, z: -6.0 };
+  let target = null;   // where the creature last saw someone
+  // The echo replays a walk up and down the hall (a stand-in for a recorded run).
+  function echoAt(t) {
+    const legs = 5.0, speed = 1.1, turn = 1.2, walk = legs / speed, loop = 2 * walk + 2 * turn;
+    const u = t % loop;
+    let x, yaw;
+    if (u < walk) { x = 3.6 + u * speed; yaw = Math.PI / 2; }
+    else if (u < walk + turn) { x = 3.6 + legs; yaw = Math.PI / 2 + (u - walk) / turn * Math.PI; }
+    else if (u < 2 * walk + turn) { x = 3.6 + legs - (u - walk - turn) * speed; yaw = -Math.PI / 2; }
+    else { x = 3.6; yaw = -Math.PI / 2 + (u - 2 * walk - turn) / turn * Math.PI; }
+    const moving = u < walk || (u > walk + turn && u < 2 * walk + turn);
+    return { pos: [x, 0, -4.9], yaw, step: moving ? t * 5.5 : 0 };
+  }
+  let last = performance.now(), clock = 0;
+
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt;
+
+    // Walk. The wrist band is only a mock-up, but raising it already slows you, as designed.
+    const raised = keys.has('KeyQ');
+    const speed = (raised ? 1.6 : 3.2) * dt;
+    const f = [Math.sin(me.yaw), -Math.cos(me.yaw)], r = [Math.cos(me.yaw), Math.sin(me.yaw)];
+    let mx = 0, mz = 0;
+    if (keys.has('KeyW') || keys.has('ArrowUp')) { mx += f[0]; mz += f[1]; }
+    if (keys.has('KeyS') || keys.has('ArrowDown')) { mx -= f[0]; mz -= f[1]; }
+    if (keys.has('KeyD') || keys.has('ArrowRight')) { mx += r[0]; mz += r[1]; }
+    if (keys.has('KeyA') || keys.has('ArrowLeft')) { mx -= r[0]; mz -= r[1]; }
+    const len = Math.hypot(mx, mz);
+    if (len > 0) {
+      const nx = me.x + mx / len * speed, nz = me.z + mz / len * speed;
+      if (free(nx, me.z)) me.x = nx;
+      if (free(me.x, nz)) me.z = nz;
+    }
+    ui.wrist.classList.toggle('up', raised);
+    const secs = Math.floor(clock) % 60;
+    ui.clock.textContent = Math.floor(clock / 60) % 60 + ':' + String(secs).padStart(2, '0');
+    ui.now.style.left = (clock % 60) / 60 * 100 + '%';
+
+    const echo = echoAt(clock);
+    // It only moves toward where it last saw someone; while blind it stays put.
+    if (target) {
+      const dx = target[0] - beast.x, dz = target[2] - beast.z, dist = Math.hypot(dx, dz);
+      if (dist > 2.5) {
+        const nx = beast.x + dx / dist * 0.5 * dt, nz = beast.z + dz / dist * 0.5 * dt;
+        if (interior(nx, nz) < -0.9) { beast.x = nx; beast.z = nz; }
+      }
+    }
+    const center = [beast.x, 1.45 + 0.08 * Math.sin(clock * 0.9), beast.z];
+    const w = 1.7 * Math.sin(clock * 0.21);
+    const phase = clock;
+    // The fixed offsets keep a flat face of the body from ever lying exactly in our slice,
+    // where its surface would be undefined and render as noise.
+    let R = planeRot(0, 3, 0.35 + phase * 0.31);
+    R = mul(R, planeRot(1, 3, 0.2 + phase * 0.23));
+    R = mul(R, planeRot(2, 3, phase * 0.17));
+    R = mul(R, planeRot(0, 2, phase * 0.11));
+    const eyes = EYES.map(c => eyeAt(R, c, w, center));
+    const eye = [me.x, 1.6, me.z];
+    // Seeing needs an eye in our world (w = 0) and a clear line through the room.
+    const open = eyes.filter(e => Math.abs(e.w) < EYE_R);
+    const sees = open.some(e => lineOfSight(e.pos, eye));
+    const echoHead = [echo.pos[0], 1.5, echo.pos[2]];
+    const seesEcho = open.some(e => lineOfSight(e.pos, echoHead));
+    if (sees) target = eye; else if (seesEcho) target = echoHead;
+    ui.sense.classList.toggle('sees', sees || seesEcho);
+    ui.text.textContent = sees && seesEcho ? 'it sees you and your echo' : sees ? 'it sees you' : seesEcho ? 'it sees your echo' :
+      open.length ? 'its eyes are here, but it can\u2019t see you' : 'blind: its eyes are elsewhere in w';
+    ui.lid.setAttribute('d', sees || seesEcho ? 'M2 10 Q17 1 32 10 Q17 19 2 10 Z' : 'M2 10 Q17 15 32 10');
+    ui.pupil.style.display = sees || seesEcho ? '' : 'none';
+
+    const cp = Math.cos(me.pitch);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(U.uRes, canvas.width, canvas.height);
+    gl.uniform1f(U.uTime, clock);
+    gl.uniform1f(U.uW, w);
+    gl.uniformMatrix4fv(U.uRot, false, new Float32Array(transpose(R)));
+    gl.uniform1i(U.uStyle, style);
+    gl.uniform3fv(U.uCam, eye);
+    gl.uniform3fv(U.uFwd, [Math.sin(me.yaw) * cp, Math.sin(me.pitch), -Math.cos(me.yaw) * cp]);
+    gl.uniform3fv(U.uCenter, center);
+    gl.uniform3fv(U.uEyeA, eyes[0].pos);
+    gl.uniform3fv(U.uEyeB, eyes[1].pos);
+    gl.uniform3fv(U.uEchoPos, echo.pos);
+    gl.uniform1f(U.uEchoYaw, echo.yaw);
+    gl.uniform1f(U.uEchoStep, echo.step);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  // For screenshots and tests.
+  window.Walkthrough = {
+    place(x, z, yaw, pitch) { Object.assign(me, { x, z, yaw, pitch }); },
+    beast(x, z) { Object.assign(beast, { x, z }); },
+    style(s) { style = s; },
+  };
+})();
+</script>
+</body>
+</html>
