@@ -2,9 +2,22 @@
 
 Where we left off, and what to pick up next. See [DESIGN.md](DESIGN.md) for the full design.
 
-## Pick up here (2026-10-17, evening)
+## Pick up here (2026-10-18)
 
-**Current focus: the web games, to share with friends** (the user's call, 2026-10-17). Done today, all pushed and live on GitHub Pages:
+**Current focus: the first-person spike again** (the user's call, 2026-10-18; the friends haven't tried the web games yet). Done today, in `unreal-spike/` (local only):
+- **"The Figure" is built in the spike**, one-for-one with Echo Sight level 2: `.\spike.ps1 play -Level figure`. Run 1: a figure wearing run 2's number already stands on the gold plate behind a cellophane window, holding the gold door. Later runs arrive in its room; a film-negative ghost shows where it stood, and disappears while you stand in it.
+- **Both halves of the rule:** every run records what it saw (the doors, and the figure: where, and face or back). An echo breaks time if it sees you where it saw no one, if nobody is where it saw someone (or they're turned the wrong way, face for back), or if a door isn't as it saw it. Loose matching: 70 cm, 0.35 s, side-on counts either way. The figure only vanishes once you can't see it.
+- The level code now takes any number of plates and doors (coloured to match), glass (`w` cells) and an exit area.
+- `.\spike.ps1 test -Level figure`: the solution wins; skipping the figure, leaving early and standing with your back to the glass each break time, each for its own reason. Blind Spot's four checks and Hold the Door's solution still pass. **Nobody has played The Figure by hand yet.**
+
+Next for the spike:
+1. **Play The Figure by hand** (`cd unreal-spike; .\spike.ps1 play -Level figure`). This is the test from section 1: does first person work for the time puzzle, not just the stealth? Does the reveal land (you walk in and someone's already there, wearing your next number)? Is standing in the ghost clear enough, and is face-or-back too strict?
+2. Play Blind Spot's time controls, HUD and sounds by hand (the "by hand" items in section 1).
+3. Then the rest of section 1: the clock waits for your first key, and the exit plays out the rest of the loop.
+
+### Web games (waiting on friends)
+
+Done 2026-10-17, all pushed and live on GitHub Pages:
 - Echo Sight: every past self's view cone is always shaded amber (yours is blue); a cone and the board's edge pulse red 0.8 s before an echo would see you (forecast from its replay, assuming you stand still), solid red while it does. Being seen where an echo remembers a figure doesn't count.
 - New levels: Causal Diamond 8-10 (Relay, Fuse, Event Horizon), Echo Sight 5-6 (Footsteps, Two of Them).
 - Every level's reference solution was played to the win screen on the live site in Chrome, and every trap stays blocked. Nobody has played the new levels by hand yet.
@@ -16,13 +29,9 @@ Next for the web games:
 
 Testing tip: playwright-core drives Chrome (`C:/Program Files/Google/Chrome/Application/chrome.exe`) through each page's test hook (`window.EchoSight` / `window.CausalDiamond`: `loadLevel`, `setDriver`, `setSpeed`, `status`) with the `tests/autopilot.js` and `tests/solutions.js` scripts injected. It isn't installed in the repo; `npm i playwright-core` somewhere outside it.
 
-### The Unreal spike (on hold while the web games are shared)
+### Unreal spike notes
 
-The spike plays well enough to judge now: Blind Spot, time controls, HUD and pause menu, feedback and sound are all in. Nothing below has been played by hand yet except Blind Spot itself and the door sound. In order:
-
-1. **Play the spike by hand** (`cd unreal-spike; .\spike.ps1`) and answer the four "by hand" items in section 1: retake fair or a cheat, 3 s break back-off, pause menu with mouse and keys, the time bar's pressure, the ticks (consistent now? subtle alone, tense together? room tone?), and silence while rewinding or fast-forwarding.
-2. **Then the real test: "The Figure"** (Echo Sight level 2) one-for-one in the spike: the authored figure holding the door, and the "must be seen" half of the rule (section 1, from "Run 1: you walk in…"). This decides whether first person works for the time puzzle, not just the stealth.
-3. Small polish when it's in the way: section 4.
+The by-hand items for Blind Spot (section 1): retake fair or a cheat, 3 s break back-off, pause menu with mouse and keys, the time bar's pressure, the ticks (consistent now? subtle alone, tense together? room tone?), and silence while rewinding or fast-forwarding. Small polish when it's in the way: section 4.
 
 Ideas raised and parked: a crosshair dot (user: leave it for now); a short "time held" icon for while the plate holds the door open.
 
@@ -30,7 +39,7 @@ Ideas raised and parked: a crosshair dot (user: leave it for now); a short "time
 
 - **Causal Diamond** (`causal-diamond/`): ten levels, all verified by `node causal-diamond/tests/verify-levels.js`. Levels 8 (Relay), 9 (Fuse) and 10 (Event Horizon) added 2026-10-17.
 - **Echo Sight** (`echo-sight/`): 2D test bed for stealth against yourself. Six levels, all verified by `node echo-sight/tests/verify-levels.js`. Still not played by hand. Levels 5 (Footsteps, a walking figure) and 6 (Two of Them, two figures for two later selves) added 2026-10-17; a figure can now vanish and reappear (a bare `[seconds]` waypoint).
-- **The spike exists only on this disk.** `unreal-spike/` is git-ignored, and the user chose (2026-10-17) not to track it yet, to keep the repo small. All the 2026-10-16/17 spike work (Blind Spot, time controls, HUD, sound) is in it. Back up the folder's sources (`Source/`, `Tools/`, `Art/`, `Config/`, `spike.ps1`, `README.md`, the `.uproject`) before anything risky.
+- **The spike exists only on this disk.** A copy of its sources from before The Figure is in `C:\Users\krish\dev\spike-backups\20261018-1235`. `unreal-spike/` is git-ignored, and the user chose (2026-10-17) not to track it yet, to keep the repo small. All the 2026-10-16/17 spike work (Blind Spot, time controls, HUD, sound) is in it. Back up the folder's sources (`Source/`, `Tools/`, `Art/`, `Config/`, `spike.ps1`, `README.md`, the `.uproject`) before anything risky.
 - **Engine decided: Unreal 5.8** (the user's call, 2026-10-15): consistent with Oathbound, and aimed at Steam (consoles maybe later, via ID@Xbox / PlayStation Partners). Assets are generated by scripts (Python material builder, canvas-drawn PNGs, a text map), so only sources need tracking. Lumen on Steam Deck is heavy: watch it.
 - **Research done:** `RESEARCH.md`. No shipped first-person "stealth against your former self". Closest: Echo (2017, third person), TimeHeist (itch.io), UnLoop (2025, VR, worth playing).
 - **Unreal spike** in `unreal-spike/` (git-ignored, never checked in; its README lists every switch). Two levels: **Blind Spot** (default, Echo Sight level 1 one-for-one) and the original **Hold the Door** (`-Level door`: cardboard L-room, loop corridor, 4D paper creature, swinging lamp). Paper-doll echoes, lensed portal, wall equations, arrival pads per run. `.\spike.ps1 test` runs four autopilot checks on Blind Spot (solve, trap, recover, retake). Timeline log: `Saved/Logs/CausalSpike.log` (grep `LogSpike`). The packaged build in `Dist/` predates the 2026-10-17 work; repackage before sharing it.
@@ -62,13 +71,14 @@ Ideas raised and parked: a crosshair dot (user: leave it for now); a short "time
 - [ ] Listen by hand: are the ticks consistent now (rebuilt 2026-10-17 as one sample-exact stream after the user found them uneven), subtle enough on their own and tense enough together? Do they need a near-silent room tone under them? Rewinding and fast-forward should be fully silent.
 - [ ] Rewind/retake polish: a misprint flash on branching; the portal view shows the arrival pad at the retake moment, not 0:00; in Hold the Door the swinging lamp and the creature do not rewind yet.
 The test: same puzzles as Echo Sight levels 1 and 2, only the presentation changes. Fun in 3D means the spike just lacked a puzzle; flat means first person costs readability, and we lean on an echo view (hold to see all selves, maybe a top-down diorama) or rethink the camera.
-- [ ] Run 1: you walk in and see "yourself" (a figure doll, the next run's number) holding the door. The figure is authored, not recorded.
-- [ ] The "must be seen" half of the rule: a later run must be where the figure stood, in view of the echo that saw it, during the window it saw it. Loose matching: a radius, rough facing, a time window.
-- [ ] Ghost outline of the figure while you repay it.
-- [ ] The figure only vanishes out of sight (Open question below).
+- [x] Run 1: you walk in and see "yourself" (a figure doll, the next run's number) holding the door. The figure is authored, not recorded. (2026-10-18: `-Level figure`.)
+- [x] The "must be seen" half of the rule: a later run must be where the figure stood, in view of the echo that saw it, during the window it saw it. Loose matching: 70 cm, 0.35 s, and facing as face-or-back (side-on counts either way).
+- [x] Ghost outline of the figure while you repay it: a film negative, gone while you stand in it.
+- [x] The figure only vanishes out of sight.
+- [ ] Play The Figure by hand (see "Pick up here").
 - [ ] "The clock waits for your first key" (fast-forward is done).
 - [ ] The exit plays out the rest of the loop without you; it only opens if every past self stays consistent (spotted, door, props, figure kept).
-- [ ] An autopilot reference solution, like `-SpikeScript=solve`, plus the obvious mistake caught.
+- [x] An autopilot reference solution, like `-SpikeScript=solve`, plus the obvious mistake caught: `.\spike.ps1 test -Level figure` (solve, trap, early, turned).
 
 ### 2. Then the pins ("promised sighting", options C + D, decided 2026-10-15)
 - [ ] Run 1 hits an obstacle, drops a pin: the world goes slow-mo for a few seconds.
@@ -103,7 +113,7 @@ The test: same puzzles as Echo Sight levels 1 and 2, only the presentation chang
 - [ ] Decide whether the spike's sources (Source/, Tools/, Art/, Config/, the .uproject) move into a tracked folder; its binaries and Dist never do. User, 2026-10-17: not yet, to keep the repo small. Ask again once the spike has proved itself (after "The Figure").
 
 ## Open design questions
-- [ ] **The figure vanishing:** if your past self watched it disappear, you can't copy that. Vanish only out of sight?
+- [x] **The figure vanishing:** if your past self watched it disappear, you can't copy that. Decided and built 2026-10-18: it vanishes only out of sight, after its path ends. If you keep watching it, it stays, and the next run owes it for longer.
 - [ ] **Moving figures:** can a figure walk a path without needing frame-perfect copying?
 - [ ] **Self-made prophecies:** could your own past self's memories create obligations with no authored figure? (The pins are one answer.)
 - [ ] **"What you didn't see, you don't owe":** levels scatter possible future selves; looking creates obligations, looking away avoids them. Say honestly in-game that this is a game rule, not physics.

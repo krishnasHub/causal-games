@@ -72,7 +72,7 @@ You are the echo. On run N you remember your earlier runs from the inside, and t
 
 ### The backbone: "I saw myself, so I must become it"
 Agreed 2026-10-14, confirmed after playing the Unreal spike on 2026-10-16. The spike had only "don't be seen", which made it stealth, not a time puzzle. The game needs both halves of the rule:
-- **Authored figures** open each level or act. On run 1 you walk in and see "yourself" (a paper doll wearing the next run's number) holding a door. A later run must be where the figure stood, in view of the echo that saw it, while it saw it. Matching is loose: a radius, rough facing and a time window, with a ghost outline as a guide. The figure only vanishes out of sight. This is the reveal, and it teaches "must be seen".
+- **Authored figures** open each level or act. On run 1 you walk in and see "yourself" (a paper doll wearing the next run's number) holding a door. A later run must be where the figure stood, in view of the echo that saw it, while it saw it. Matching is loose: a radius, rough facing and a time window, with a ghost outline as a guide. In the spike (2026-10-18) that is 70 cm, 0.35 s, and facing as face-or-back: the echo must see the same side of you it saw of the figure, and side-on counts as either. The ghost is a film negative that disappears while you stand in it. The figure only vanishes out of sight, so if you keep watching it, it stays, and the next run owes it for longer. This is the reveal, and it teaches "must be seen".
 - **Pins** (promised sightings) are the moment-to-moment verb. Same rule, but the player makes them. See below.
 
 It's a bootstrap loop (who held the door first? nobody), which general relativity allows. Say so in-game rather than hope nobody asks.
