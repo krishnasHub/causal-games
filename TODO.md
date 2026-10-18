@@ -1,4 +1,4 @@
-﻿# TODO
+# TODO
 
 Where we left off, and what to pick up next. See [DESIGN.md](DESIGN.md) for the full design.
 
@@ -15,9 +15,9 @@ Later on 2026-10-18, **the spike became a playable game** (built by three agents
 - **Campaign:** tutorial = Blind Spot with tips per run; New game = The Figure, Two Watchers, Footsteps, Retrace (adds shutters), Two of Them (adds several figures, and figures that go and come back).
 - `.\spike.ps1 test -Level all`: 21 checks across the six levels, each trap breaking for its intended reason, plus Hold the Door's solve, all passing on the merged build.
 - **The spike is now a local-only git repo** (`unreal-spike/.git`, never pushed), so work can run in parallel worktrees.
-- Not checked by hand: real keyboard and mouse on the title screen (only simulated input reached it), the Wikipedia button opening a browser, and every level played by a person. Two of Them is tight for people (about 1â€“1.5 s to reach the portal in run 2).
+- Not checked by hand: real keyboard and mouse on the title screen (only simulated input reached it), the Wikipedia button opening a browser, and every level played by a person. Two of Them is tight for people (about 1–1.5 s to reach the portal in run 2).
 
-**Crouch (proposed, waiting on the user's go-ahead):** hold Ctrl (toggle as an option; cones move to V), 0.55Ã— speed, eyes drop to about 1 m. Posture is recorded and replayed, so a crouched echo is blinded by low cover too. Low cover is about 1.1 m (boxes, half walls). Cones get a hatched "hidden if crouched" shadow behind cover. The figure needs no posture match. No lean, enterable boxes or movable cover yet. Teaching level "Duck": crouch on run 1's plate so your own past self can't see the corridor.
+**Crouch (proposed, waiting on the user's go-ahead):** hold Ctrl (toggle as an option; cones move to V), 0.55× speed, eyes drop to about 1 m. Posture is recorded and replayed, so a crouched echo is blinded by low cover too. Low cover is about 1.1 m (boxes, half walls). Cones get a hatched "hidden if crouched" shadow behind cover. The figure needs no posture match. No lean, enterable boxes or movable cover yet. Teaching level "Duck": crouch on run 1's plate so your own past self can't see the corridor.
 
 Next for the spike:
 1. **Play it by hand from the title screen**, through the tutorial and the campaign. The Figure is still the key test: does first person work for the time puzzle?
@@ -72,7 +72,7 @@ Ideas raised and parked: a crosshair dot (user: leave it for now); a short "time
 ### 1. Build Blind Spot, then "The Figure", one-for-one in the spike
 - [x] Blind Spot built (2026-10-16): `./spike.ps1 play` (default level; `-Level door` for the old one). Run 1 spawns in the plate room, later runs arrive in the corridor on their own pads. `./spike.ps1 test`: the reference solution wins, holding the plate facing the door breaks time.
 - [x] Played Blind Spot by hand (2026-10-17): works. A mistake in run 1 (watching the door) is repairable by a relay (echo 3), which led to the time controls below.
-- [x] Time controls (2026-10-17): hold F fast-forward (4Ã—), hold Q rewind, T freeze and retake a self (erases later echoes), breaks back you up 3 s. `./spike.ps1 test` checks solve, trap, relay (`recover`) and `retake`.
+- [x] Time controls (2026-10-17): hold F fast-forward (4×), hold Q rewind, T freeze and retake a self (erases later echoes), breaks back you up 3 s. `./spike.ps1 test` checks solve, trap, relay (`recover`) and `retake`.
 - [x] Rewind looks like a VHS tape winding back (2026-10-17): scanlines, snow, tracking bands, "<< REW".
 - [x] HUD and pause menu (2026-10-17): a time bar for the loop's minute (red in the last 10 s), run pips, the goal as each run starts. Esc pauses: Resume, Map (no echoes on it), Hints (one at a time, the answer last), Controls, Info (a one-page codex per physics topic), New game, Quit. M opens the map.
 - [ ] Play the time controls by hand: does retake feel fair or like a cheat? Is 3 s the right back-off after a break?
@@ -112,7 +112,7 @@ The test: same puzzles as Echo Sight levels 1 and 2, only the presentation chang
 - [ ] The creature: for now it touches no matter and is no threat (user's call, 2026-10-16). Later: find how it chases you and is a threat. It should hunt the newest self hardest. Make it deterministic with echoes.
 - [ ] Creature log flickers "arrives / leaves / arrives" within 0.5 s as it enters our slice.
 - [ ] EXIT decal looks stretched (Width/Height aspect).
-- [x] Portal view looked like bare meshes (2026-10-17): its capture had no Lumen bounce light and was brightened 30Ã—. Now recaptured for 20 frames so Lumen settles, with a per-level gain (3 Blind Spot, 8 Hold the Door).
+- [x] Portal view looked like bare meshes (2026-10-17): its capture had no Lumen bounce light and was brightened 30×. Now recaptured for 20 frames so Lumen settles, with a per-level gain (3 Blind Spot, 8 Hold the Door).
 - [x] HUD (2026-10-17): no longer debug text, except the creature's status line in Hold the Door (top left, overlaps the goal). Later: move the HUD onto the wrist band.
 - [ ] Hold the Door's creature debug line: fold it into the HUD or drop it.
 - [ ] Packaging clears the build's `Saved` folder: copy play logs aside before repackaging.
