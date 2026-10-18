@@ -17,7 +17,7 @@ Open `index.html` in a browser. It's a single file with no build step and no ins
 **Every past self must see exactly what it remembers seeing.**
 
 - **Seeing your past self is safe.** It replays exactly, so your memory of it will always hold.
-- **Being seen is not.** If a past self sees you where it remembers no one, it has been *spotted*, and the timeline splits. Echoes replay exactly, so the game warns you: a past self's cone pulses red, and so does the board's edge, when it will see you within 0.8 s if you stay where you are.
+- **Being seen is not.** If a past self sees you where it remembers no one, it has been *spotted*, and the timeline splits. Every past self's view cone is always shaded on the floor in amber, even when you can't see the self (your own cone is blue). Echoes replay exactly, so the game also warns you: a past self's cone pulses red, and so does the board's edge, when it will see you within 0.8 s if you stay where you are.
 - **The figure.** On some levels, your first run shows a stranger already there. On later runs it's gone, because it was you. Stand where it stood while your past self could see it.
 
 Paradoxes work as in [Causal Diamond](../causal-diamond/): every self after a broken one exists in only 50% of histories, and the exit only accepts 100%. When you reach the exit, the game plays out the rest of the loop without you. If any past self would still be spotted, miss a prophecy or get stranded, the exit stays shut.

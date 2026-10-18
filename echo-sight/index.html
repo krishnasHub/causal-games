@@ -123,7 +123,7 @@ kbd{font-family:var(--mono);font-size:11.5px;color:var(--ink);border:1px solid v
         <div class="eyebrow">Legend</div>
         <div class="legend">
           <div><span style="background:var(--self)"></span>You, and numbered echoes of past runs</div>
-          <div><span style="background:var(--sight)"></span>A past self&rsquo;s view cone, and figures it remembers seeing</div>
+          <div><span style="background:var(--sight)"></span>A past self&rsquo;s view cone (always shown; yours is blue), and figures it remembers seeing</div>
           <div><span style="background:var(--figure)"></span>The figure. On later runs, its outline is where you must be</div>
           <div><span style="background:var(--glass)"></span>Glass: blocks movement, not sight</div>
           <div><span style="background:var(--photon)"></span>Plate / door pair. Rings are the signal moving at c</div>
@@ -549,13 +549,15 @@ function render(){
   // Your own sight: everything outside your cone is in shadow, and no one there can be seen.
   c.save();c.beginPath();c.rect(0,0,cssW,cssH);conePath(c,view,tickD);c.arc(view.x*ts,view.y*ts,R*ts*1.8,0,7);
   c.fillStyle=COL.void;c.globalAlpha=sight?.45:.62;c.fill('evenodd');c.restore();c.globalAlpha=1;
+  c.beginPath();conePath(c,view,tickD);c.fillStyle=COL.self;c.globalAlpha=.06;c.fill();c.strokeStyle=COL.self;c.globalAlpha=.3;c.lineWidth=1;c.stroke();c.globalAlpha=1;
   const iSee=t=>sight||E.canSee(lv,sim,view,t,tickD);
   const pulse=reduceMotion?.6:.5+.5*Math.sin(now*10),warned=warnings(ci,me,tickD);
 
-  // Echo cones (for echoes you can see, or all of them under Echo Sight). Red while it sees you, pulsing red just before.
-  ents.forEach((e,i)=>{if(i===ci||e.gone||!iSee(e))return;const spotted=sim.ents[i].sees.includes(ci)&&!e.div,warn=warned.has(i);
-    c.beginPath();conePath(c,e,tickD);c.fillStyle=spotted||warn?COL.paradox:COL.sight;c.globalAlpha=spotted?.2:warn?.05+.15*pulse:.1;c.fill();
-    c.strokeStyle=spotted||warn?COL.paradox:COL.sight;c.globalAlpha=warn?.3+.5*pulse:.35;c.lineWidth=1;c.stroke();c.globalAlpha=1;});
+  // Echo cones, always shown, like sight lines pencilled on the floor (the echo itself only when you can see it).
+  // Amber, against your own blue cone; red while it sees you, pulsing red just before.
+  ents.forEach((e,i)=>{if(i===ci||e.gone)return;const spotted=sim.ents[i].sees.includes(ci)&&!e.div,warn=warned.has(i),col=spotted||warn?COL.paradox:COL.sight;
+    c.beginPath();conePath(c,e,tickD);c.fillStyle=col;c.globalAlpha=spotted?.25:warn?.08+.17*pulse:.14;c.fill();
+    c.strokeStyle=col;c.globalAlpha=warn?.35+.5*pulse:.55;c.lineWidth=1.5;c.setLineDash([4,3]);c.stroke();c.setLineDash([]);c.globalAlpha=1;});
 
   // Remembered figures: where each past self saw someone at this moment. Hollow ones are missing.
   c.font=font(600);
