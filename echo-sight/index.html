@@ -201,6 +201,33 @@ const LEVELS=[
   "#........X...........#",
   "#........#########x###",
   "#........#########O..#",
+  "######################"]},
+ {name:'Footsteps',T:25,
+  hint:'This time the figure doesn’t wait for you on the plate. It walks there, along the glass corridor, stopping twice on the way, and its plate opens your door. Next run you arrive where it started. Walk where it walked, stop where it stopped, and don’t get ahead of it: your past self is watching the whole way.',
+  phantom:[[0,1,1],[1,5,1],[2.5,5,1],[3.5,9,1],[5,9,1],[5.75,12,1],[11,12,1]],
+  map:[
+  "######################",
+  "#A..........pY..E....#",
+  "#wwwwwwwwwwww#.......#",
+  "#...........##.......#",
+  "#S..........##########",
+  "#...........X........#",
+  "#...........#..q.....#",
+  "#...........#.....O..#",
+  "######################"]},
+ {name:'Two of Them',T:25,
+  hint:'You see the figure hold the gold plate, then walk into the portal. Through the lower window, someone is already holding the purple plate. One person can’t be in both places. Your second self is the first figure, and steps into the portal just as it did. Your third self is the second, and waits on purple until your first self is through. And hold the red plate before you leave, or the last of you has no way out.',
+  phantom:[[0,11,4],[0.75,11,1],[2.5,11,1],[2.75,10,1],[2.75],[2.8,11,5],[7,11,5]],
+  map:[
+  "######################",
+  "#S.......wOp.#.......#",
+  "#........w...Z...E...#",
+  "#........w...#.......#",
+  "#####X####.A.#########",
+  "#........w.q.#.......#",
+  "#........w...#.......#",
+  "#........###.#...r...#",
+  "#........Y...........#",
   "######################"]}
 ];
 
@@ -218,13 +245,17 @@ function parseLevel(L){
   }}
   for(const d of lv.doors){const p=lv.plates[d.link];const dist=Math.hypot(p.x-d.x,p.y-d.y);d.delay=Math.round(dist/C*TPS);
     lv.ringMax[d.link]=Math.max(lv.ringMax[d.link]||0,dist+.6);}
-  if(L.phantom)lv.phantom=L.phantom.map(([t,x,y])=>({t:Math.round(t*TPS),x:x+.5,y:y+.5}));
+  if(L.phantom)lv.phantom=L.phantom.map(([t,x,y])=>x===undefined?{t:Math.round(t*TPS),gone:true}:{t:Math.round(t*TPS),x:x+.5,y:y+.5});
   return lv;
 }
-// The figure seen on the first run: a scripted path of [tick, x, y] waypoints. It exists only while no echoes do.
+// The figure seen on the first run: a scripted path of [seconds, x, y] waypoints. A bare [seconds] means it is gone
+// from then until the next waypoint, where it appears again. It exists only while no echoes do.
 function phantomAt(lv,n){
   const P=lv.phantom;if(!P||n<P[0].t||n>P[P.length-1].t)return null;
-  for(let i=1;i<P.length;i++)if(n<=P[i].t){const a=P[i-1],b=P[i],f=b.t===a.t?1:(n-a.t)/(b.t-a.t);return{x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f};}
+  for(let i=1;i<P.length;i++)if(n<=P[i].t){const a=P[i-1],b=P[i];
+    if(a.gone)return n===b.t&&!b.gone?{x:b.x,y:b.y}:null;
+    if(b.gone)return n<b.t?{x:a.x,y:a.y}:null;
+    const f=b.t===a.t?1:(n-a.t)/(b.t-a.t);return{x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f};}
   return null;
 }
 function makeSim(lv,selves){
@@ -498,11 +529,15 @@ function drawFigure(c,x,y,col,alpha,label,ring){
 }
 // Echoes that will see you within WARN_S if you stay where you are (they replay exactly, so this is a forecast, not a guess).
 const WARN_S=.8;
+// Does past self s remember seeing someone on your tile at tick n? Then being seen there is the plan, not a mistake.
+function remembers(s,n,me){return (s.mem[n]||'').split(';').includes(Math.floor(me.x)+','+Math.floor(me.y));}
+// Is past self i seeing you where it remembers no one?
+function spottedBy(i,ci,n){const e=sim.ents[i];return i<ci&&!e.div&&!e.gone&&e.sees.includes(ci)&&!remembers(runSelves[i],n-1,sim.ents[ci]);}
 function warnings(ci,me,n){
   const out=new Set();if(mode!=='run')return out;
   for(let i=0;i<ci;i++){const e=sim.ents[i],s=runSelves[i];if(e.gone||e.div||e.sees.includes(ci))continue;
     for(let t=n+1;t<=Math.min(s.end,n+Math.round(WARN_S*TPS));t++){const p=s.rec[t],inp=s.inputs[t-1];if(!p||!inp)break;
-      if(E.canSee(lv,sim,{x:p.x,y:p.y,ang:inp.a},me,t)){out.add(i);break;}}}
+      if(E.canSee(lv,sim,{x:p.x,y:p.y,ang:inp.a},me,t)&&!remembers(s,t-1,me)&&!remembers(s,t,me)){out.add(i);break;}}}
   return out;
 }
 function render(){
@@ -555,7 +590,7 @@ function render(){
 
   // Echo cones, always shown, like sight lines pencilled on the floor (the echo itself only when you can see it).
   // Amber, against your own blue cone; red while it sees you, pulsing red just before.
-  ents.forEach((e,i)=>{if(i===ci||e.gone)return;const spotted=sim.ents[i].sees.includes(ci)&&!e.div,warn=warned.has(i),col=spotted||warn?COL.paradox:COL.sight;
+  ents.forEach((e,i)=>{if(i===ci||e.gone)return;const spotted=spottedBy(i,ci,tickD),warn=warned.has(i),col=spotted||warn?COL.paradox:COL.sight;
     c.beginPath();conePath(c,e,tickD);c.fillStyle=col;c.globalAlpha=spotted?.25:warn?.08+.17*pulse:.14;c.fill();
     c.strokeStyle=col;c.globalAlpha=warn?.35+.5*pulse:.55;c.lineWidth=1.5;c.setLineDash([4,3]);c.stroke();c.setLineDash([]);c.globalAlpha=1;});
 
@@ -592,7 +627,7 @@ function render(){
   });
 
   // The board's edge reddens when any echo is about to see you, and goes solid while one does.
-  {const seen=sim.ents.some((e,i)=>i<ci&&!e.div&&!e.gone&&e.sees.includes(ci));
+  {const seen=sim.ents.some((e,i)=>spottedBy(i,ci,tickD));
     if(mode==='run'&&(seen||warned.size)){c.strokeStyle=COL.paradox;c.globalAlpha=seen?.85:.35+.5*pulse;c.lineWidth=Math.max(5,ts*.24);
       c.strokeRect(0,0,cssW,cssH);c.globalAlpha=1;}}
 
@@ -605,7 +640,7 @@ function render(){
   $('sClock').textContent=`${fmt(tickD/TPS)} / ${fmt(lv.T)}`;
   $('sSelves').textContent=`${runSelves.length} (you + ${runSelves.length-1} echo${runSelves.length===2?'':'es'})`;
   const ex=existence(ci,ents),se=$('sExist');se.textContent=Math.round(ex*100)+'%';se.className=ex<1?'bad':'ok';
-  const watchers=sim.ents.map((e,i)=>i<ci&&!e.div&&!e.gone&&e.sees.includes(ci)?i+1:0).filter(Boolean),sw=$('sSeen');
+  const watchers=sim.ents.map((e,i)=>spottedBy(i,ci,tickD)?i+1:0).filter(Boolean),sw=$('sSeen');
   sw.textContent=watchers.length?'echo '+watchers.join(', '):'nobody';sw.className=watchers.length?'bad':'ok';
 }
 function renderTL(tickD,ents){

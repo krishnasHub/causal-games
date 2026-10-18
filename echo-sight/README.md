@@ -30,6 +30,8 @@ See [DESIGN.md](../DESIGN.md) for the full rules and the plan for the first-pers
 2. **The Figure:** someone holds the door for you. Next run, you become them.
 3. **Two Watchers:** three selves, two of them watching. Each has to slip past the ones before it.
 4. **Retrace:** the figure, glass you can be seen through, and a shutter on your past self's way home.
+5. **Footsteps:** the figure walks to the plate, stopping on the way. Next run, walk where it walked, when it walked.
+6. **Two of Them:** the figure holds one plate, steps into the portal, and someone else is already on another. Two figures, so two later selves.
 
 ## Controls
 

@@ -58,8 +58,10 @@ Memory is stored as tiles, not identities. It doesn't matter *which* self fills 
 2. **The Figure:** a stranger holds the door for you on run 1. On run 2 you become them.
 3. **Two Watchers:** three selves. The second has to reach its plate unseen by the first, and the third has to get past both.
 4. **Retrace:** the figure, glass you can be seen through, and a shutter on your past self's way home.
+5. **Footsteps:** the figure walks to the plate, stopping on the way. Next run, walk where it walked, when it walked.
+6. **Two of Them:** the figure holds one plate, steps into the portal, and someone else is already on another. Two figures, so two later selves.
 
-All four are checked by `echo-sight/tests/verify-levels.js`: each is winnable, can't be won solo, and the obvious mistake gets caught.
+All six are checked by `echo-sight/tests/verify-levels.js`: each is winnable, can't be won solo, and the obvious mistake gets caught.
 
 ## The game: first person, in a paper-craft world
 

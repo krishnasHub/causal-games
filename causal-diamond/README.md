@@ -23,7 +23,7 @@ A welcome panel opens first. The **Info** button in the header explains the phys
 
 ## Levels
 
-Each level adds one idea, and the last one combines them all.
+Each level adds one idea. Level 7 combines the first six; levels 8 to 10 are a second act: past selves who have to get each other home, and a race against your own light.
 
 1. **Hold the Door**: introduces echoes.
 2. **Grandfather**: the portal's kill switch is on your only path out. Press it too early and you cancel your own past.
@@ -32,6 +32,9 @@ Each level adds one idea, and the last one combines them all.
 5. **Lockstep**: two side-by-side doors need both plates held at once, and the first self has to stay put until the shutter on the way home reopens.
 6. **Race the Light**: the kill switch's signal takes 2.6 s to reach the portal. Your past self has to get home inside that window, and you have to get through the door before it closes.
 7. **Causal Diamond**: lockstep doors, a shutter and a kill switch together. Plan the first run before you move.
+8. **Relay**: one self holds the way into the middle room, another holds the exit open from inside it, and the first can't leave until the second is back out.
+9. **Fuse**: the kill switch sits between two exit doors and its light reaches the portal fast. Your past selves have to leave before you're through, and you walk out on light that's still travelling.
+10. **Event Horizon**: a relay, a shutter that shuts while the exit is held, and a slow kill switch on the way out.
 
 ## Controls
 
@@ -63,7 +66,7 @@ node tests/screenshot.cjs "C:/Program Files/Google/Chrome/Application/chrome.exe
 
 ## Status
 
-Prototype. Seven levels, no save state, and built mainly for keyboard play. Ideas for a bigger 2D/3D version:
+Prototype. Ten levels, no save state, and built mainly for keyboard play. Ideas for a bigger 2D/3D version:
 
 - Show both branches of a superposition at once.
 - Add puzzles where you create a paradox on purpose and then resolve it.

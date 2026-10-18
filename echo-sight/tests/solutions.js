@@ -14,7 +14,14 @@ root.ESSolutions=[
    [['until',3.5],['go',3,5],['go',7,5],['go',7,3],['go',17,3]]]},
  {name:'Retrace',runs:[
    [['go',17,3],['look',0],['until',11],['look',null],['go',18,10]],
-   [['go',11,2],['until',8],['go',11,6]]]}
+   [['go',11,2],['until',8],['go',11,6]]]},
+ {name:'Footsteps',runs:[
+   [['go',6,3],['look',-90],['until',6.2],['look',null],['go',15,6],['wait',4],['go',18,7]],
+   [['go',5,1],['until',2.5],['go',9,1],['until',5],['go',12,1],['until',8],['go',16,1]]]},
+ {name:'Two of Them',runs:[
+   [['go',5,3],['look',-20],['until',2.75],['look',0],['go',5,5],['go',9,8],['look',null],['go',17,7],['until',9],['go',10,1]],
+   [['go',11,1],['until',2.5],['go',10,1]],
+   [['go',11,5],['until',5],['go',17,2]]]}
 ];
 // Traps: the obvious mistake on a level. Each must end without a win.
 root.ESTraps=[
@@ -35,6 +42,19 @@ root.ESTraps=[
    [['go',11,2],['until',8],['go',11,6]]]},
  {level:3,name:'hold the gold plate too long',runs:[
    [['go',17,3],['look',0],['until',11],['look',null],['go',18,10]],
-   [['go',11,2],['until',12.5],['go',11,6]]]}
+   [['go',11,2],['until',12.5],['go',11,6]]]},
+ {level:4,name:'run straight to the plate',runs:[
+   [['go',6,3],['look',-90],['until',6.2],['look',null],['go',15,6],['wait',4],['go',18,7]],
+   [['go',12,1],['until',8],['go',16,1]]]},
+ {level:4,name:'wait on the pad, then follow',runs:[
+   [['go',6,3],['look',-90],['until',6.2],['look',null],['go',15,6],['wait',4],['go',18,7]],
+   [['until',1],['go',5,1],['until',3.5],['go',9,1],['until',6],['go',12,1],['until',8],['go',16,1]]]},
+ {level:5,name:'one self plays both figures',runs:[
+   [['go',5,3],['look',-20],['until',2.75],['look',0],['go',5,5],['go',9,8],['look',null],['go',17,7],['until',9],['go',10,1]],
+   [['go',11,1],['until',2.5],['go',11,5],['until',5],['go',17,2]]]},
+ {level:5,name:'first self never holds the red plate',runs:[
+   [['go',5,3],['look',-20],['until',2.75],['look',0],['go',5,5],['go',9,8],['look',null],['go',15,6],['until',9],['go',10,1]],
+   [['go',11,1],['until',2.5],['go',10,1]],
+   [['go',11,5],['until',5],['go',17,2]]]}
 ];
 })(typeof window!=='undefined'?window:globalThis);

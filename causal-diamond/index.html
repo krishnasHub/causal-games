@@ -272,6 +272,41 @@ const LEVELS=[
   "#........##.........##",
   "##y########.....E...##",
   "#...O....##.........##",
+  "######################"]},
+ {name:'Relay',T:30,
+  hint:'The gold plate opens the way into the middle room, and the purple plate in there opens the exit. That takes two helpers: one on gold, one on purple. But whoever holds purple still has to get home, back through the gold door. So your first self can’t leave gold until your second self is back out.',
+  map:[
+  "######################",
+  "#S.......#.......#...#",
+  "#..p.....#.......#...#",
+  "#........X.....q.Y.E.#",
+  "#........#.......#...#",
+  "#...A....#.......#...#",
+  "#O.......#.......#...#",
+  "######################"]},
+ {name:'Fuse',T:25,
+  hint:'The kill switch sits between the two exit doors, and the portal is close, so its light arrives quickly. Whoever holds purple can’t wait until you’re through: they’d never get home in time. Purple is far from its door, so the door stays open for a while after they let go. Let your past selves leave first, and walk through on the light that’s still travelling.',
+  map:[
+  "######################",
+  "#S.......X.....#######",
+  "#..p.....#####k#######",
+  "#........#####.#######",
+  "#...A....#####Y#######",
+  "#.......O#....E......#",
+  "#........#...........#",
+  "#q.......#...........#",
+  "######################"]},
+ {name:'Event Horizon',T:30,
+  hint:'A relay, a shutter and a kill switch. Gold lets your second self into the far room and back out. Purple opens the exit, and also shuts the shutter in front of the portal, so nobody gets home while purple is held. The kill switch is on your way out, and its light is slow to reach the portal. Wait beside it until both past selves are nearly home.',
+  map:[
+  "######################",
+  "#S.p....#q...........#",
+  "#.......X............#",
+  "#...A...#............#",
+  "#.......###########k##",
+  "##y################Y##",
+  "#O......#............#",
+  "#.......#....E.......#",
   "######################"]}
 ];
 
@@ -432,7 +467,7 @@ function win(){
   mode='won';
   const last=li===LEVELS.length-1;
   $('winTitle').textContent=last?'EVERY LOOP CLOSED':'TIMELINE CONSISTENT';
-  $('winText').textContent=`Escaped at ${fmt(sim.tick/TPS)} with ${runSelves.length} self${runSelves.length>1?'s':''} in play, and every loop closed cleanly.`+(last?' You’ve finished all seven levels.':'');
+  $('winText').textContent=`Escaped at ${fmt(sim.tick/TPS)} with ${runSelves.length} self${runSelves.length>1?'s':''} in play, and every loop closed cleanly.`+(last?' You’ve finished all ten levels.':'');
   $('nextBtn').hidden=last;
   $('win').hidden=false;
 }
