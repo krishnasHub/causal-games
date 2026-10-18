@@ -2,7 +2,21 @@
 
 Where we left off, and what to pick up next. See [DESIGN.md](DESIGN.md) for the full design.
 
-## Pick up here (2026-10-17)
+## Pick up here (2026-10-17, evening)
+
+**Current focus: the web games, to share with friends** (the user's call, 2026-10-17). Done today, all pushed and live on GitHub Pages:
+- Echo Sight: every past self's view cone is always shaded amber (yours is blue); a cone and the board's edge pulse red 0.8 s before an echo would see you (forecast from its replay, assuming you stand still), solid red while it does. Being seen where an echo remembers a figure doesn't count.
+- New levels: Causal Diamond 8-10 (Relay, Fuse, Event Horizon), Echo Sight 5-6 (Footsteps, Two of Them).
+- Every level's reference solution was played to the win screen on the live site in Chrome, and every trap stays blocked. Nobody has played the new levels by hand yet.
+
+Next for the web games:
+1. **Hear back from the user's friends.** Do the new levels' "aha"s land? Is Fuse's timing too tight (about 0.6 s with straight-line moves; diagonal moves give more room)?
+2. Open choices for Echo Sight: give each echo its own shade of cone, numbered to match (suggested, not built); limit the edge warning to echoes you can see, if it feels like cheating; whether the warning should also cover walking *into* a cone (it doesn't; same open question as the spike).
+3. Fill in `PLAYTEST.md` from what the friends say.
+
+Testing tip: playwright-core drives Chrome (`C:/Program Files/Google/Chrome/Application/chrome.exe`) through each page's test hook (`window.EchoSight` / `window.CausalDiamond`: `loadLevel`, `setDriver`, `setSpeed`, `status`) with the `tests/autopilot.js` and `tests/solutions.js` scripts injected. It isn't installed in the repo; `npm i playwright-core` somewhere outside it.
+
+### The Unreal spike (on hold while the web games are shared)
 
 The spike plays well enough to judge now: Blind Spot, time controls, HUD and pause menu, feedback and sound are all in. Nothing below has been played by hand yet except Blind Spot itself and the door sound. In order:
 
