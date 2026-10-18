@@ -87,9 +87,17 @@ Decided 2026-10-15 (options C and D).
 - **Everything a run did and saw is recorded** and must not be contradicted: being seen, props, doors, plates and other signals. Pins are obligations. Run 1's own interactions are not pins.
 - **Wiggle room for props:** a prop a past self moved replays that run, and only has to end up close to where it did.
 - **Borrowing:** taking an object earlier than run 1 did breaks time when run 1 reaches for it, unless you return it in time. Nothing goes through the portal. Consumables (exotic matter) can only be taken if no past run took them.
-- **Death or "jump at will"** both start a new run and leave an echo; a death-jump costs more exotic matter. Echoes can't be erased (the spike's Backspace is for testing only). Failed echoes stay.
+- **Death or "jump at will"** both start a new run and leave an echo; a death-jump costs more exotic matter. Echoes are only ever erased by a retake (below). Failed echoes stay.
 - **Exotic matter**, found in levels, is the budget for selves. It replaces the earlier cap of four selves. (The spike still caps at four selves and 60 s.)
-- **Failure:** some breaks reset the level. A 50% (Deutsch) break shows a "you exist in N realities" misprint, then resets.
+- **Failure:** when time breaks, the misprint plays and you're put back a few seconds (3 s in the spike), not to the start of the run. A 50% (Deutsch) break shows a "you exist in N realities" misprint first.
+
+### Recovering from mistakes
+Decided 2026-10-17, after playing Blind Spot in the spike. A mistake in an earlier run must never force a restart from run 1.
+- **The relay comes first:** any mistake can be covered by a later self, at the cost of a self. In Blind Spot, if run 1 held the plate watching the door, run 2 waits until echo 1 has left, takes the plate itself facing away, and run 3 goes through. Levels should always leave a relay open. Nothing is erased, so it stays honest to Novikov.
+- **No timestamps for planning.** The game doesn't show when an echo will leave its post; remembering what you did is the skill.
+- **Rewind** (hold): everything plays backwards: you retrace your steps, echoes walk backwards, doors and props reverse. What you did after that moment is forgotten.
+- **Your proper time never runs backwards.** Rewound seconds still count as lived, because you lived them. That keeps rewind honest physics and stops it being free trial and error.
+- **Retake** (when really stuck): freeze time, pick any self, scrub to a moment by eye (not by number), and take over that self from there. Everything it did before that moment is kept. Every later echo and the current run are erased, because their memories were recorded against the old history. In-game this is a branch to a different history (Deutsch), shown with the misprint look, not a repair. Rewind is just a retake of your current self. Cost: free in the spike; later maybe exotic matter or proper time.
 
 ### Arrivals
 Run 1 starts at the level's spawn. Every later run arrives somewhere else, where the portal lets out, as in Echo Sight (run 1 starts at `S`, later runs at `A`). Each later run gets its own pad there, so you never arrive inside an echo.
@@ -115,14 +123,15 @@ A 4D creature, sliced into our world every frame, so it changes shape as it move
 - **Peek** (later): hold a key to glance through one echo's eyes for a second, perhaps for exotic matter. **Rejected:** always-on live views of every echo. They make it too easy, turn stealth into watching security cameras, and cost a full extra render per echo.
 - **Sight cones and the warning** (above), and footsteps of past selves, positioned in 3D.
 - **Ghost outlines** mark where a figure needs you to stand.
-- **Fast-forward** (4×), and the clock waits for your first key, so there's no dead time.
+- **Fast-forward** (hold, 4×), and the clock waits for your first key, so there's no dead time.
+- **Rewind and retake** (above).
 - **The exit plays out the rest of the loop** without you, and only opens if every past self stays consistent. You earn the win by watching it hold.
 
 ### Physics we keep accurate
 - Closed timelike curves: the portal.
 - Novikov self-consistency: the exit only accepts a consistent timeline.
 - Deutsch's resolution: a paradox becomes a mix of histories (50% existence), not a contradiction.
-- Proper time: the personal time budget.
+- Proper time: the personal time budget. It only ever increases, even while you rewind.
 - The light-cone rule: you can only pin what you can see.
 
 Rules that aren't physics, such as "what you didn't see, you don't owe", should be called game rules in-game.

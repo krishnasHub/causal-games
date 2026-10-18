@@ -128,7 +128,7 @@ kbd{font-family:var(--mono);font-size:11.5px;color:var(--ink);border:1px solid v
           <div><span style="background:var(--glass)"></span>Glass: blocks movement, not sight</div>
           <div><span style="background:var(--photon)"></span>Plate / door pair. Rings are the signal moving at c</div>
           <div><span style="background:repeating-linear-gradient(45deg,var(--link-p) 0 3px,var(--void) 3px 5px)"></span>Shutter: open by default, closes while its plate is held</div>
-          <div><span style="background:var(--paradox)"></span>Spotted, or a paradox</div>
+          <div><span style="background:var(--paradox)"></span>Spotted, or a paradox. A pulsing red cone and edge: about to be spotted</div>
           <div><span style="background:var(--exit)"></span>Exit. Only counts at 100% existence</div>
         </div>
       </section>
@@ -496,6 +496,15 @@ function drawFigure(c,x,y,col,alpha,label,ring){
   if(ring){c.globalAlpha=1;c.strokeStyle=ring;c.lineWidth=2;c.stroke();}
   c.globalAlpha=1;if(label){c.fillStyle=COL.void;c.fillText(label,x*ts,y*ts+1);}
 }
+// Echoes that will see you within WARN_S if you stay where you are (they replay exactly, so this is a forecast, not a guess).
+const WARN_S=.8;
+function warnings(ci,me,n){
+  const out=new Set();if(mode!=='run')return out;
+  for(let i=0;i<ci;i++){const e=sim.ents[i],s=runSelves[i];if(e.gone||e.div||e.sees.includes(ci))continue;
+    for(let t=n+1;t<=Math.min(s.end,n+Math.round(WARN_S*TPS));t++){const p=s.rec[t],inp=s.inputs[t-1];if(!p||!inp)break;
+      if(E.canSee(lv,sim,{x:p.x,y:p.y,ang:inp.a},me,t)){out.add(i);break;}}}
+  return out;
+}
 function render(){
   const c=fctx,ts=TS;c.setTransform(DPR,0,0,DPR,0,0);
   let ents,tickD,ph;
@@ -541,11 +550,12 @@ function render(){
   c.save();c.beginPath();c.rect(0,0,cssW,cssH);conePath(c,view,tickD);c.arc(view.x*ts,view.y*ts,R*ts*1.8,0,7);
   c.fillStyle=COL.void;c.globalAlpha=sight?.45:.62;c.fill('evenodd');c.restore();c.globalAlpha=1;
   const iSee=t=>sight||E.canSee(lv,sim,view,t,tickD);
+  const pulse=reduceMotion?.6:.5+.5*Math.sin(now*10),warned=warnings(ci,me,tickD);
 
-  // Echo cones (for echoes you can see, or all of them under Echo Sight)
-  ents.forEach((e,i)=>{if(i===ci||e.gone||!iSee(e))return;const spotted=sim.ents[i].sees.includes(ci)&&!e.div;
-    c.beginPath();conePath(c,e,tickD);c.fillStyle=spotted?COL.paradox:COL.sight;c.globalAlpha=spotted?.2:.1;c.fill();
-    c.strokeStyle=spotted?COL.paradox:COL.sight;c.globalAlpha=.35;c.lineWidth=1;c.stroke();c.globalAlpha=1;});
+  // Echo cones (for echoes you can see, or all of them under Echo Sight). Red while it sees you, pulsing red just before.
+  ents.forEach((e,i)=>{if(i===ci||e.gone||!iSee(e))return;const spotted=sim.ents[i].sees.includes(ci)&&!e.div,warn=warned.has(i);
+    c.beginPath();conePath(c,e,tickD);c.fillStyle=spotted||warn?COL.paradox:COL.sight;c.globalAlpha=spotted?.2:warn?.05+.15*pulse:.1;c.fill();
+    c.strokeStyle=spotted||warn?COL.paradox:COL.sight;c.globalAlpha=warn?.3+.5*pulse:.35;c.lineWidth=1;c.stroke();c.globalAlpha=1;});
 
   // Remembered figures: where each past self saw someone at this moment. Hollow ones are missing.
   c.font=font(600);
@@ -578,6 +588,11 @@ function render(){
       c.strokeStyle=COL.paradox;c.lineWidth=3;c.beginPath();c.arc(e.x*ts,e.y*ts,R*ts+5,-Math.PI/2,-Math.PI/2+f*2*Math.PI);c.stroke();}
     if(ex<1){c.fillStyle=COL.paradox;c.fillText(Math.round(ex*100)+'%',e.x*ts,e.y*ts-R*ts-ts*.32);}
   });
+
+  // The board's edge reddens when any echo is about to see you, and goes solid while one does.
+  {const seen=sim.ents.some((e,i)=>i<ci&&!e.div&&!e.gone&&e.sees.includes(ci));
+    if(mode==='run'&&(seen||warned.size)){c.strokeStyle=COL.paradox;c.globalAlpha=seen?.85:.35+.5*pulse;c.lineWidth=Math.max(5,ts*.24);
+      c.strokeRect(0,0,cssW,cssH);c.globalAlpha=1;}}
 
   if(mode==='ready'){c.fillStyle=COL.void;c.globalAlpha=.6;c.fillRect(0,cssH/2-ts*.8,cssW,ts*1.6);c.globalAlpha=1;
     c.fillStyle=COL.ink;c.font=`500 ${Math.max(11,ts*.42)}px "IBM Plex Mono",monospace`;
