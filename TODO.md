@@ -10,8 +10,19 @@ Where we left off, and what to pick up next. See [DESIGN.md](DESIGN.md) for the 
 - The level code now takes any number of plates and doors (coloured to match), glass (`w` cells) and an exit area.
 - `.\spike.ps1 test -Level figure`: the solution wins; skipping the figure, leaving early and standing with your back to the glass each break time, each for its own reason. Blind Spot's four checks and Hold the Door's solution still pass. **Nobody has played The Figure by hand yet.**
 
+Later on 2026-10-18, **the spike became a playable game** (built by three agents, merged and verified):
+- **Title screen** (`.\spike.ps1` with no `-Level`): a top-down Blind Spot with three echoes on 30 s loops that never see each other, and New game, Tutorial, Controls, Info, Quit. Info is an index of 14 physics articles (spacetime to the fourth dimension), each with a checked Wikipedia link. Pause gains Restart level and Quit to title; winning shows Next level / Replay / Title.
+- **Campaign:** tutorial = Blind Spot with tips per run; New game = The Figure, Two Watchers, Footsteps, Retrace (adds shutters), Two of Them (adds several figures, and figures that go and come back).
+- `.\spike.ps1 test -Level all`: 21 checks across the six levels, each trap breaking for its intended reason, plus Hold the Door's solve, all passing on the merged build.
+- **The spike is now a local-only git repo** (`unreal-spike/.git`, never pushed), so work can run in parallel worktrees.
+- Not checked by hand: real keyboard and mouse on the title screen (only simulated input reached it), the Wikipedia button opening a browser, and every level played by a person. Two of Them is tight for people (about 1–1.5 s to reach the portal in run 2).
+
+**Crouch (proposed, waiting on the user's go-ahead):** hold Ctrl (toggle as an option; cones move to V), 0.55× speed, eyes drop to about 1 m. Posture is recorded and replayed, so a crouched echo is blinded by low cover too. Low cover is about 1.1 m (boxes, half walls). Cones get a hatched "hidden if crouched" shadow behind cover. The figure needs no posture match. No lean, enterable boxes or movable cover yet. Teaching level "Duck": crouch on run 1's plate so your own past self can't see the corridor.
+
 Next for the spike:
-1. **Play The Figure by hand** (`cd unreal-spike; .\spike.ps1 play -Level figure`). This is the test from section 1: does first person work for the time puzzle, not just the stealth? Does the reveal land (you walk in and someone's already there, wearing your next number)? Is standing in the ghost clear enough, and is face-or-back too strict?
+1. **Play it by hand from the title screen**, through the tutorial and the campaign. The Figure is still the key test: does first person work for the time puzzle?
+2. Crouch, version 1, and "Duck", if the user agrees.
+3. **Play The Figure by hand** (`cd unreal-spike; .\spike.ps1 play -Level figure`). This is the test from section 1: does first person work for the time puzzle, not just the stealth? Does the reveal land (you walk in and someone's already there, wearing your next number)? Is standing in the ghost clear enough, and is face-or-back too strict?
 2. Play Blind Spot's time controls, HUD and sounds by hand (the "by hand" items in section 1).
 3. Then the rest of section 1: the clock waits for your first key, and the exit plays out the rest of the loop.
 
