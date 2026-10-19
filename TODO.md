@@ -17,6 +17,8 @@ Later on 2026-10-18, **the spike became a playable game** (built by three agents
 - **The spike is now a local-only git repo** (`unreal-spike/.git`, never pushed), so work can run in parallel worktrees.
 - Not checked by hand: real keyboard and mouse on the title screen (only simulated input reached it), the Wikipedia button opening a browser, and every level played by a person. Two of Them is tight for people (about 1–1.5 s to reach the portal in run 2).
 
+- **First hand play (2026-10-18), The Figure:** too fast for a person. Run 1 couldn't reach the gold door before the figure let go, and run 2 was always a second late onto the plate. Fixed: the figure waits 2 s on its pad and holds the plate until 0:14 (was 0:08), and the grace for a missing or wrong-way remembered person is 1 s (was 0.4 s). Each level now opens paused on a plan (name, goal, map with the start, the arrival pads and where anyone already here walks and stands) until Start. All 21 checks pass; `Dist` repackaged. The other figure levels keep their timings: watch whether they need the same slack.
+
 **Crouch (proposed, waiting on the user's go-ahead):** hold Ctrl (toggle as an option; cones move to V), 0.55× speed, eyes drop to about 1 m. Posture is recorded and replayed, so a crouched echo is blinded by low cover too. Low cover is about 1.1 m (boxes, half walls). Cones get a hatched "hidden if crouched" shadow behind cover. The figure needs no posture match. No lean, enterable boxes or movable cover yet. Teaching level "Duck": crouch on run 1's plate so your own past self can't see the corridor.
 
 Next for the spike:
