@@ -2,7 +2,62 @@
 
 Where we left off, and what to pick up next. See [DESIGN.md](DESIGN.md) for the full design.
 
-## Pick up here (2026-10-18)
+## Pick up here (2026-10-24)
+
+**Start with:** the user plays `unreal-spike\Dist\Windows\CausalSpike.exe` (packaged 2026-10-24 with everything below), from the title: New game shows the rules intro, then The Figure. Then the "Watch" list of 2026-10-23 below. Screenshots of the new look: https://claude.ai/artifact/RDpzvdYHCYLkif2BodRxvK.
+
+**Built in the spike on 2026-10-23/24 (not committed; the spike's repo and DESIGN.md/TODO.md are all uncommitted):**
+- **Walls are stacked cardboard boxes** (DESIGN.md: Art). One rounded 100 cm box mesh (`SM_Box`, an OBJ written and imported by `make_assets.py`, so Lumen gets a distance field) drawn many times by an instanced mesh in `SpikeWorld::AddWallBoxes`. Each box's custom data: size, tint (8% white board), seed, cut end, two marks. `M_Box` keeps the rounded edges' radius at any size (world position offset), bows the fronts up to 1.8 cm, and draws kraft, scuffs, darker bottoms, the flap fold, tape and marks from canvas textures in `Art/boxes.html` (`T_Kraft`, `T_Scuff`, `T_Marks` 4x4 atlas, `T_Tape`, `T_CutEdge`). Rows: about one per 115 cm of wall; boxes 60-120 cm wide. The old panels stay as dark core and collision; boxes don't collide. Half walls are two rows of boxes with a hidden core.
+- **Step 1 under it:** panels stop half a wall short at each corner and a post fills the joint, so no two faces share a plane (the z-fighting flicker); lintel undersides sit 5 mm above the ceiling; card faces are smooth (the 1 cm flutes aliased into moire).
+- **Doors are glossy painted wood** (`M_Door`: `T_Wood` panels tinted by the plate's paint under a clear coat) with a brass knob each side. The slab is 200 cm wide; only its middle 80 cm shows, so the panels and knob are fitted there.
+- **The paper doll** (calm face) from the 2026-10-23 mock-up is in `Art/draw.html` at 2x (1024x2048); doll and box textures import as BC7, never streamed.
+- **New game shows a rules intro** (`SpikeHUD::DrawIntro`): nine sentences fading in and out, the controls taped on the right, progress pips, Skip (click, Enter, Space, Esc). `-SpikeTitle=intro` shoots it. The README doesn't mention it yet.
+- **Everything runs silently:** `spike.ps1` build/prepare/package/test/shot open no window or console (output in `Saved\Logs\spike-<command>.txt`); packaging passes `-NoHotReloadFromIDE` so another project's Live Coding doesn't block it. Offscreen runs need `-log` for `-ResX` to apply.
+- 25 autopilot checks pass with the boxes.
+
+**Next for the look:** floors and ceilings still use the old blotchy card; lighting is unchanged (the mock-up had more contrast); the doll's card edge (a strip mesh along each piece's outline, outlines in the mock-up's JSON) isn't built; the cut ends at jambs read as dark strips.
+
+**Onboarding, discussed 2026-10-24 (not decided):** a cold open (the figure holds a door for you, then the title), one idea per room (the loop; your echo replays you; don't be seen; the figure), notes on the walls from future you, and a replay through the echo's eyes when time breaks. Ask the user about the cold open and the notes before writing it into DESIGN.md.
+
+## Earlier (2026-10-23)
+
+**Start with:** the user plays `unreal-spike\Dist\Windows\CausalSpike.exe` (packaged 2026-10-23 16:13, with every fix below, the tick fix included), mainly Footsteps. Then read its log, `Dist\Windows\CausalSpike\Saved\Logs\CausalSpike.log`, against the "Watch" list at the end of this section.
+
+**Also tomorrow:**
+- The user has a few more things to test; ask for them first.
+- **The echoes' ticking sound is still broken** (user, 2026-10-22). What they hear: "I rarely hear a tick as run 1. In run 2, I sometimes hear extra ticks... then nothing." Note that run 1 has no echoes, and by design the clock ticks once per echo in the loop, so run 1 is meant to be silent. Decide with the user whether run 1 should tick, and debug run 2's extra ticks and the silence after them. Record it with `-SpikeRecordAudio=<sec>`. Clues in last night's log (`unreal-spike\Saved\HandPlayLogs\CausalSpike.log`, "clock: tick at sample" lines): the gaps are 240000 samples (5 s at 48 kHz) within a run. Across a run change or a break they're uneven: 0 at the first tick of a session, about 2.2 M and 3.2 M at run starts, and 1429120 (about 29.8 s) after the breaks in Footsteps. Background is in "The echoes' clock" under section 1 below.
+
+**Fixed 2026-10-23 (ticking):** the clock counted real seconds from whenever it last restarted, so after a break's back-off or a rewind the next tick came a whole period after the jump, off the loop's grid (in Footsteps run 2: ticks at 5 s and 10 s, silence through five breaks, then one at about 13.5 s). Ticks now fall on loop time (5, 10, 15 s with one echo): the game re-syncs the stream after any jump in the loop's clock, a resume, or a change in echoes here (`SpikeSound::SyncClock`). The clock's state also carried over between levels (a Restart mid-run 2 could tick into the next run 1); a new level's clock now starts silent. Still by design: run 1 is silent, and an echo that has gone through the portal stops counting, so run 2 goes quiet once echo 1 has left. Ask the user whether either should change. 25 autopilot checks pass; `Dist` repackaged. Listen for it in the hand play.
+
+**Housekeeping:**
+- **Nothing is committed yet.** In the main repo, DESIGN.md and TODO.md are modified. In the spike's local repo: SpikeLoop, SpikeHUD, SpikeLevel, SpikePuzzle, SpikeWorld, SpikeGameMode, spike.ps1 and README. Commit once the user says so.
+- **Earlier hand-play logs** (2026-10-18 and the evening of 2026-10-22) are kept in `unreal-spike\Saved\HandPlayLogs` (git-ignored), because packaging wipes Dist's logs. Copy Dist's logs there before each `.\spike.ps1 package`.
+- **Packaging (and `build`) fails while any other Unreal project has Live Coding running** (Oathbound's game windows, say): "Unable to build while Live Coding is active". Wait for those windows to close; don't kill another project's processes.
+
+**Hand play on 2026-10-18 (from the packaged build's log):** The Figure won twice (one break for standing with your back to the glass); Footsteps broke time seven times in a row in run 2. The log showed the player *ahead* of the figure at first (walking through its stops, with its negative behind them, out of sight), and then the flat 3 s back-off kept them out of step, so every retry broke again.
+
+**Built in the spike on 2026-10-22** (DESIGN.md: Time chaos, and the Art notes; spike README: the rule):
+- **Time chaos.** Straying from what an echo remembers fills a gauge, at a rate set by how far off you are in space and time (1 m per second early or late). It never drains while you play. At 100 time breaks, the gauge vents to 50, and you go back to before chaos started rising and to where you last stood with your figure. The level-complete card scores all the chaos caused; the pause menu shows it.
+- **The gauge:** a boiler's gauge glass in card and crayon on the right of the screen, with bubbles while rising and steam near the line.
+- **Phantoms:** from half full, flickering scraps of your own runs at the wrong moment, more often as it fills. They count for nothing.
+- **The toast says which way** the remembered spot is (ahead, behind, left, right).
+- **Plates, tape and doors share one bright paint** (scarlet, lemon gold, violet). Plates have an ink rim, a faint idle glow, a 60 cm radius, and press with your feet within 80 cm (was 45). Each door has a warm bulb, lit while open and dark while shut (was red/green).
+- **Footsteps `late`** (a second behind to the second stop) now wins with about 49 chaos; a new `lag` trap (3 s behind) breaks.
+- **Two of Them:** the second figure and run 1's look at it come 0.5 s earlier.
+
+**Hand play on the evening of 2026-10-22:** Footsteps still broke time 5 times, all at about 0:11.9, when the figure steps onto the gold plate while echo 1 watches the gold door. Door contradictions filled the gauge at the full 300 a second, whatever the timing, so after a vent to 50 you had about 0.17 s of slack. Fixed the same evening:
+- **Doors get the same slack as people** (`DoorLag`): 1 m of error per second off from memory, so a second early or late is free. New Footsteps check `slow`: a second behind all the way onto the plate, wins (about 54 chaos).
+- **A figure's number counts:** sightings keep the run number on its back, and only that self can fill them. This keeps Two of Them's `both` trap breaking (door slack had let it win with 93).
+- **Tests run headless** (`-RenderOffscreen`, hidden, unattended): no window steals focus or keys.
+- 26 autopilot checks, all passing. Solutions score 0 chaos except Two of Them (about 7); `late` about 49, `slow` about 54.
+
+**Watch** in the next hand play:
+1. Footsteps: can you follow the figure now, onto the plate? Does the gauge explain what's going wrong, and is a break's put-back fair?
+2. The gauge's rates: too strict, too soft? Do phantoms help or just distract? Is the violet door readable in dim corridors (it's dark at 0:03 in Footsteps)?
+3. Plates at 80 cm: does any route press one by accident?
+4. The rest of the HUD (time bar, run pips, menus) in the same craft style as the gauge: not started.
+
+## Earlier (2026-10-18)
 
 **Current focus: the first-person spike again** (the user's call, 2026-10-18; the friends haven't tried the web games yet). Done today, in `unreal-spike/` (local only):
 - **"The Figure" is built in the spike**, one-for-one with Echo Sight level 2: `.\spike.ps1 play -Level figure`. Run 1: a figure wearing run 2's number already stands on the gold plate behind a cellophane window, holding the gold door. Later runs arrive in its room; a film-negative ghost shows where it stood, and disappears while you stand in it.
@@ -130,7 +185,7 @@ The test: same puzzles as Echo Sight levels 1 and 2, only the presentation chang
 
 ## Open design questions
 - [x] **The figure vanishing:** if your past self watched it disappear, you can't copy that. Decided and built 2026-10-18: it vanishes only out of sight, after its path ends. If you keep watching it, it stays, and the next run owes it for longer.
-- [ ] **Moving figures:** can a figure walk a path without needing frame-perfect copying?
+- [x] **Moving figures:** can a figure walk a path without needing frame-perfect copying? Answered 2026-10-22 by time chaos: a step behind costs a trickle on a gauge, not a break. Check by hand in Footsteps.
 - [ ] **Self-made prophecies:** could your own past self's memories create obligations with no authored figure? (The pins are one answer.)
 - [ ] **"What you didn't see, you don't owe":** levels scatter possible future selves; looking creates obligations, looking away avoids them. Say honestly in-game that this is a game rule, not physics.
 - [ ] Sound as a channel: footsteps your past self heard.

@@ -91,7 +91,7 @@ Decided 2026-10-15 (options C and D).
 - **Borrowing:** taking an object earlier than run 1 did breaks time when run 1 reaches for it, unless you return it in time. Nothing goes through the portal. Consumables (exotic matter) can only be taken if no past run took them.
 - **Death or "jump at will"** both start a new run and leave an echo; a death-jump costs more exotic matter. Echoes are only ever erased by a retake (below). Failed echoes stay.
 - **Exotic matter**, found in levels, is the budget for selves. It replaces the earlier cap of four selves. (The spike still caps at four selves and 60 s.)
-- **Failure:** when time breaks, the misprint plays and you're put back a few seconds (3 s in the spike), not to the start of the run. A 50% (Deutsch) break shows a "you exist in N realities" misprint first.
+- **Failure:** when time breaks (time chaos reaches its line, below), the misprint plays and you're put back a few seconds, to before it went wrong, not to the start of the run. A 50% (Deutsch) break shows a "you exist in N realities" misprint first.
 
 ### Recovering from mistakes
 Decided 2026-10-17, after playing Blind Spot in the spike. A mistake in an earlier run must never force a restart from run 1.
@@ -109,9 +109,20 @@ Built in the spike on 2026-10-18 (level: Duck).
 - Sight cones draw the sheltered stretch past cover faintly. The paper-doll echoes have knees (thigh and shin cards): they squat when crouched, and the trailing knee bends as they walk.
 - Not built: toggle crouch, lean, crawling under things, figures that remember a posture, bending your own first-person legs.
 
+### Time chaos
+Decided 2026-10-22, after Footsteps proved too strict in hand play: a person following a walking figure kept getting ahead of it or behind it, and every slip broke time.
+- **Straying fills a gauge instead of breaking time at once.** Being seen where an echo remembers no one, missing a spot where it remembers someone, being turned the wrong way, or a door or prop not as it remembers: each makes time chaos rise while the echo is watching.
+- **How fast depends on how far off you are, in space and time together:** your distance from where someone was remembered, plus 1 m for every second early or late. Inside 70 cm it costs nothing. A step behind on the right path costs a trickle (10 a second). Nobody anywhere near a remembered spot costs 100 a second, and being seen where nobody was remembered anywhere near costs 300 a second (about a third of a second from empty), so stealth stays strict.
+- **It never drains while you play.** Rewind, retake and redo don't take it back. At 100 time breaks, the gauge vents to 50, and you're put back to before chaos started rising and to where you last walked with your figure (3 to 10 s back), so you come back in step.
+- **The score** at the end of a level is all the chaos you caused, plus the number of breaks: "Not a ripple in time" for none.
+- **Phantoms** (2026-10-22): from half full, selves from histories that almost happened flicker in, each a 1.5 to 3 s scrap of one of your own runs played at the wrong moment, jittering like a misprint. They come more often the fuller the gauge (every 5 s or so at half, every second near the line, at most three at once). They count for nothing: they press no plates, see nothing and can't be seen.
+- **Slack can't stand in for a self.** A figure wears the number of the run that will be it, and an echo remembers that number: only that self can fill the spot, however close in time another self gets. (Timing alone wasn't enough: once doors got the same slack as people, one self walking from Two of Them's gold plate to the purple one arrived within what chaos forgives.)
+- **Doors get the same slack as people.** A door an echo watches is graded by how many seconds it is off from memory, 1 m of error per second. Before this, Footsteps asked for frame-perfect timing onto the gold plate (echo 1 watches the gold door open), and hand play broke time five times there.
+- Physics framing: the history bends a little, and past the line it splits (the Deutsch misprint). The gauge's rates are game rules, and the game should call them that.
+
 ### Planning and slack
 - **Each level opens on its plan:** name, goal and a map with the start, the arrival pads, cover, and where anyone already there walks and stands. The map is always one key away (M). It shows no echoes, so remembering your own runs is still the skill.
-- **Grace for being where you were seen** is 1 s in the spike (0.25 s for being seen where you weren't). First hand play found 0.4 s too tight for a person in first person: you need a moment to realise where you have to be and walk there.
+- **Slack for being where you were seen** used to be a fixed grace (1 s in the spike, 0.25 s for being seen where you weren't); first hand play found 0.4 s too tight for a person in first person. Since 2026-10-22, time chaos (above) replaces the fixed graces.
 
 ### Arrivals
 Run 1 starts at the level's spawn. Every later run arrives somewhere else, where the portal lets out, as in Echo Sight (run 1 starts at `S`, later runs at `A`). Each later run gets its own pad there, so you never arrive inside an echo.
@@ -123,6 +134,10 @@ A world made of craft materials, walked through in 3D: corrugated-card walls, cr
 - **Kid crayon drawings around real equations** on the walls: Einstein's field equations, Minkowski's interval, the Morris–Thorne wormhole, Deutsch's CTC condition, Novikov, and so on.
 - **The portal is lensed:** you see the far side through it, bent.
 - **Sight cones** are pencilled on the floor. One pulses red when its echo will see you within 0.8 s if you stand still, and goes solid red while it sees you.
+- **One paint per plate** (2026-10-22): each plate, its floor tape and its door share a bright, saturated colour no cardboard can be (scarlet, lemon gold, violet), so what opens what reads at a glance. A plate has an ink rim and counts as pressed with half a foot on it. A warm bulb on the door's frame is lit while the door is open, dark while it's shut.
+- **Walls are stacked cardboard boxes** (built 2026-10-24): boxes 60-120 cm wide in rows about 115 cm tall, each its own kraft tint (a few white board), with hairline gaps, bowed fronts, rounded edges, a fold line under the flaps, packing tape over the seam, and printed or marker marks (THIS SIDE UP, FRAGILE, "spare clock", handle holes, shipping labels). Where a wall ends at a doorway, the boxes are cut open. Faces are smooth liner board: corrugation only shows at a cut.
+- **Doors are real doors among the cardboard:** panelled wood, glossy-painted in their plate's colour under a clear coat, with a brass knob. The one thing in the world that isn't craft, so it reads as the way through.
+- **The HUD is craft too:** Victorian brass, made on a kitchen table. Gold card stands in for brass, split pins for rivets, cellophane for glass, masking tape for labels, and crayon for anything that fills or moves. The first piece is the time chaos gauge (2026-10-22): a boiler's gauge glass off a card steam pipe, with a valve wheel on top, amber crayon rising to a red crayon line, bubbles while it rises, and paper steam near the line. The time bar, run pips and wrist band should follow it.
 
 ### The creature
 A 4D creature, sliced into our world every frame, so it changes shape as it moves through w. Its eyes only appear when they cross our slice, and it can only see you then. For now it touches nothing and isn't a threat (decided 2026-10-16). Later it should chase you, hunt the newest self hardest, and be deterministic across echoes.
